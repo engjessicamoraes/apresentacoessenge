@@ -1,0 +1,87 @@
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">
+<title>Ativar envio dos laudos</title>
+<style>body{font-family:system-ui,Segoe UI,Arial,sans-serif;margin:0;background:#eef1f0;color:#1d2b2a;line-height:1.45}
+.h{background:#004642;color:#fff;padding:14px 18px;border-bottom:3px solid #EE6A15}.h b{font-size:18px}
+main{max-width:680px;margin:0 auto;padding:16px}
+.box{background:#fff;border:1px solid #cfd8d6;padding:14px 16px;margin-bottom:14px}
+ol{padding-left:20px;margin:6px 0}li{margin:0 0 9px}
+button,.a{display:block;width:100%;border:0;border-radius:4px;padding:14px;font-size:17px;font-weight:700;background:#EE6A15;color:#fff;text-align:center;text-decoration:none;margin:8px 0;cursor:pointer}
+.a{background:#004642}
+pre{white-space:pre-wrap;font-size:11px;background:#f6f8f8;border:1px solid #e3e9e8;padding:8px;max-height:160px;overflow:auto}
+#ok{color:#1d6b45;font-weight:700;text-align:center;min-height:1.2em}</style></head><body>
+<div class="h"><b>Ativar o envio automático dos laudos</b><br><small>Uma única vez · pela conta Google da Jéssica</small></div>
+<main>
+<div class="box"><b>Passo 1 – Copiar o código</b>
+<button id="c">Copiar código</button><div id="ok"></div>
+<pre id="code">/**
+ * Recebimento dos laudos de unidades habitacionais – Tupanciretã (SENGE Solidário).
+ * Cada envio do site grava o PDF na pasta e atualiza uma linha da planilha.
+ */
+const PASTA_ID = &quot;1qbm5UGT0vDlUSCLykX5iVSN1oTir__JX&quot;;
+const PLANILHA_ID = &quot;1mVM42dsrL3pWRwEOUUtqqCX8F3Z0Kf4x4fNU7_Ac-BI&quot;;
+const CHAVE = &quot;senge-solidario-tupancireta-2026&quot;;
+const CAB = [&quot;ID do laudo&quot;,&quot;Recebido em&quot;,&quot;Responsável/família&quot;,&quot;CPF&quot;,&quot;Endereço&quot;,&quot;Bairro/localidade&quot;,&quot;Coordenadas&quot;,&quot;Mapa&quot;,&quot;Tipo construtivo&quot;,&quot;Moradores&quot;,&quot;Danos&quot;,&quot;Habitabilidade&quot;,&quot;Valor estimado (R$)&quot;,&quot;Responsável técnico&quot;,&quot;Registro&quot;,&quot;Nº de fotos&quot;,&quot;PDF&quot;];
+
+function doGet() {
+  return resp({ ok: true, servico: &quot;laudos-uh&quot;, mensagem: &quot;Recebimento de laudos ativo.&quot; });
+}
+
+function doPost(e) {
+  const lock = LockService.getScriptLock();
+  try {
+    const d = JSON.parse(e.postData.contents);
+    if (d.chave !== CHAVE) return resp({ ok: false, erro: &quot;chave&quot; });
+    lock.waitLock(30000);
+    const pasta = DriveApp.getFolderById(PASTA_ID);
+    const sub = subpasta(pasta, &quot;PDFs dos laudos&quot;);
+    // substitui a versão anterior do mesmo laudo
+    const it = sub.getFiles();
+    while (it.hasNext()) { const f = it.next(); if (f.getDescription() === &quot;laudo:&quot; + d.id) f.setTrashed(true); }
+    const blob = Utilities.newBlob(Utilities.base64Decode(d.pdf), &quot;application/pdf&quot;, d.nomePdf);
+    const arq = sub.createFile(blob).setDescription(&quot;laudo:&quot; + d.id);
+    const m = d.meta || {};
+    const linha = [d.id, new Date(), m.familia, m.cpf, m.endereco, m.bairro, m.coord, m.mapa, m.tipo, m.moradores, m.danos, m.hab, m.valor, m.rt, m.registro, m.fotos, arq.getUrl()];
+    const sh = SpreadsheetApp.openById(PLANILHA_ID).getSheets()[0];
+    if (sh.getRange(1, 1).getValue() !== CAB[0]) { sh.clear(); sh.getRange(1, 1, 1, CAB.length).setValues([CAB]).setFontWeight(&quot;bold&quot;); sh.setFrozenRows(1); }
+    const ids = sh.getLastRow() &gt; 1 ? sh.getRange(2, 1, sh.getLastRow() - 1, 1).getValues().map(r =&gt; String(r[0])) : [];
+    const i = ids.indexOf(String(d.id));
+    if (i &gt;= 0) sh.getRange(i + 2, 1, 1, linha.length).setValues([linha]);
+    else sh.appendRow(linha);
+    return resp({ ok: true, pdf: arq.getUrl() });
+  } catch (err) {
+    return resp({ ok: false, erro: String(err) });
+  } finally {
+    try { lock.releaseLock(); } catch (x) {}
+  }
+}
+
+function subpasta(p, nome) { const it = p.getFoldersByName(nome); return it.hasNext() ? it.next() : p.createFolder(nome); }
+function resp(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
+
+/** Execute uma vez pelo editor para autorizar o acesso ao Drive e à planilha. */
+function autorizar() { DriveApp.getFolderById(PASTA_ID).getName(); SpreadsheetApp.openById(PLANILHA_ID).getName(); }
+</pre></div>
+<div class="box"><b>Passo 2 – Criar o script</b>
+<a class="a" href="https://script.new" target="_blank" rel="noopener">Abrir novo script do Google</a>
+<ol>
+<li>No menu <b>⋮</b> do Chrome, marque <b>“Versão para computador”</b> (no iPhone: botão <b>aA</b> › “Solicitar site para computador”).</li>
+<li>Toque dentro do código que aparece, pressione e segure › <b>Selecionar tudo</b> › <b>Colar</b>.</li>
+<li>Toque no ícone de <b>disquete</b> (Salvar).</li>
+</ol></div>
+<div class="box"><b>Passo 3 – Autorizar</b>
+<ol>
+<li>Na barra de cima, ao lado de “Executar”, escolha a função <b>autorizar</b> e toque em <b>Executar</b>.</li>
+<li><b>Revisar permissões</b> › escolha a sua conta › <b>Avançado</b> › <b>Acessar projeto (não seguro)</b> › <b>Permitir</b>. O aviso aparece porque o script é seu e não foi publicado na loja do Google.</li>
+</ol></div>
+<div class="box"><b>Passo 4 – Publicar</b>
+<ol>
+<li><b>Implantar</b> › <b>Nova implantação</b> › na engrenagem, escolha <b>App da Web</b>.</li>
+<li>Executar como: <b>Eu</b> · Quem pode acessar: <b>Qualquer pessoa</b> › <b>Implantar</b>.</li>
+<li>Copie a <b>URL do app da Web</b> (termina em <b>/exec</b>) e envie para o Claude.</li>
+</ol></div>
+</main>
+<script>
+document.getElementById("c").onclick=async()=>{const t=document.getElementById("code").textContent;
+try{await navigator.clipboard.writeText(t);}catch(e){const r=document.createRange();r.selectNodeContents(document.getElementById("code"));const s=getSelection();s.removeAllRanges();s.addRange(r);document.execCommand("copy");}
+document.getElementById("ok").textContent="Código copiado. Siga para o passo 2.";};
+</script></body></html>
