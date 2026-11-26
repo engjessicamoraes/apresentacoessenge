@@ -40,7 +40,7 @@ main{max-width:1000px;margin:0 auto;padding:18px 20px 40px}
 .stat{border:1px solid var(--line-2);border-left:5px solid var(--c);border-radius:6px;padding:9px 12px;cursor:pointer;user-select:none;background:#fff}
 .stat.off{opacity:.38}
 .stat b{display:block;font-size:26px;line-height:1.1;color:var(--ink)}
-.stat span{font-size:14px;color:var(--muted)}
+.stat span{display:block;font-size:12.5px;font-weight:600;letter-spacing:.35px;text-transform:uppercase;color:var(--muted);line-height:1.3;margin-top:2px}
 .stat.total{--c:var(--teal);cursor:default}
 #map{height:62vh;min-height:380px;border-radius:8px;border:1px solid var(--line)}
 .note{font-size:13.5px;color:var(--muted);margin:10px 2px 0;line-height:1.45}
@@ -73,7 +73,7 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
   </div>
 </div></div>
 <div class="titlebar"><div class="in">
-  <div><h1>Mapa dos imóveis vistoriados</h1><p>Tupanciretã/RS · Laudos de unidades habitacionais · <span id="upd">carregando…</span></p></div>
+  <div><h1>Mapa dos imóveis vistoriados</h1><p>Tupanciretã/RS · Laudos de unidades habitacionais · <span id="upd">Carregando…</span></p></div>
   <a class="back" href="./">Preencher um laudo</a>
 </div></div>
 <main>
@@ -115,7 +115,7 @@ function draw() {
   const seen = {};
   vis.forEach(p => {
     const k = p.lat + "," + p.lng, n = seen[k] = (seen[k] || 0) + 1;
-    const ang = n * 2.4, r = n > 1 ? 0.0003 * Math.sqrt(n - 1) : 0;
+    const ang = n * 2.4, r = n > 1 ? 0.0007 * Math.sqrt(n - 1) : 0;
     const ll = [p.lat + r * Math.sin(ang), p.lng + r * Math.cos(ang)];
     const c = cat(p.hab);
     L.circleMarker(ll, { radius: 8, color: "#fff", weight: 1.5, fillColor: COR[c], fillOpacity: .92 })
@@ -127,7 +127,7 @@ function draw() {
 
 function stats(d) {
   const cnt = {}; PTS.forEach(p => { const c = cat(p.hab); cnt[c] = (cnt[c] || 0) + 1; });
-  let h = `<div class="stat total"><b>${d.total}</b><span>laudos recebidos</span></div>`;
+  let h = `<div class="stat total"><b>${d.total}</b><span>Laudos recebidos</span></div>`;
   CAT.forEach(([k, c]) => { if (!cnt[k] && k === "Sem avaliação") return;
     h += `<div class="stat${OFF.has(k) ? " off" : ""}" style="--c:${c}" data-k="${esc(k)}"><b>${cnt[k] || 0}</b><span>${esc(k)}</span></div>`; });
   const box = document.getElementById("stats"); box.innerHTML = h;
@@ -140,7 +140,7 @@ function table() {
   const rows = Object.entries(by).sort((a, b) => b[1].t - a[1].t);
   if (!rows.length) { document.getElementById("tab").innerHTML = `<div class="state">Ainda não há laudos com localização registrada.</div>`; return; }
   const cols = CAT.filter(([k]) => rows.some(([, v]) => v[k]));
-  let h = `<div style="overflow-x:auto"><table><thead><tr><th>Bairro / localidade</th>${cols.map(([k, c]) => `<th class="n"><span class="dot" style="--c:${c}" title="${esc(k)}"></span></th>`).join("")}<th class="n">Total</th></tr></thead><tbody>`;
+  let h = `<div style="overflow-x:auto"><table><thead><tr><th>Bairro/localidade</th>${cols.map(([k, c]) => `<th class="n"><span class="dot" style="--c:${c}" title="${esc(k)}"></span></th>`).join("")}<th class="n">Total</th></tr></thead><tbody>`;
   rows.forEach(([b, v]) => { h += `<tr><td>${esc(b)}</td>${cols.map(([k]) => `<td class="n">${v[k] || ""}</td>`).join("")}<td class="n"><b>${v.t}</b></td></tr>`; });
   h += `</tbody></table></div><p class="note">${cols.map(([k, c]) => `<span class="dot" style="--c:${c}"></span>${esc(k)}`).join(" &nbsp; ")}</p>`;
   document.getElementById("tab").innerHTML = h;
@@ -151,11 +151,11 @@ async function load() {
     const r = await fetch(URL_DADOS + "?acao=pontos&t=" + Date.now());
     const d = await r.json(); if (!d.ok) throw new Error("dados");
     PTS = d.pontos || [];
-    document.getElementById("upd").textContent = "atualizado em " + d.atualizado;
-    document.getElementById("semc").textContent = d.semCoord ? `${d.semCoord} laudo(s) sem localização registrada não aparecem no mapa.` : "";
+    document.getElementById("upd").textContent = "Atualizado em " + d.atualizado;
+    document.getElementById("semc").textContent = d.semCoord === 1 ? "1 laudo sem localização registrada não aparece no mapa." : d.semCoord > 1 ? `${d.semCoord} laudos sem localização registrada não aparecem no mapa.` : "";
     stats(d); draw(); table();
   } catch (e) {
-    document.getElementById("upd").textContent = "sem conexão";
+    document.getElementById("upd").textContent = "Sem conexão";
     document.getElementById("tab").innerHTML = `<div class="state">Não foi possível carregar os dados. Verifique a internet e recarregue a página.</div>`;
   }
 }

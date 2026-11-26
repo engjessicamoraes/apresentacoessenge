@@ -58,7 +58,7 @@ main{max-width:1000px;margin:0 auto;padding:18px 20px 120px}
 .sec>summary::-webkit-details-marker{display:none}
 .sec>summary h2{margin:0;font-size:16px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.3px}
 .sec>summary .ref{font-size:13px;color:var(--muted)}
-.sec>summary .st{margin-left:auto;font-size:13px;color:var(--muted);white-space:nowrap}
+.sec>summary .st{margin-left:auto;font-size:12px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;color:var(--muted);white-space:nowrap}
 .sec>summary .st.ok{color:var(--ok)}
 .sec>summary .st.pend{color:#9a4a10}
 .sec>summary::after{content:"+";font-weight:700;color:var(--muted);margin-left:10px;width:12px;text-align:center}
@@ -68,8 +68,8 @@ main{max-width:1000px;margin:0 auto;padding:18px 20px 120px}
 
 .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px 16px;margin-top:10px}
 .f{grid-column:span 6;display:flex;flex-direction:column;gap:4px}
-.f.s3{grid-column:span 3}.f.s4{grid-column:span 4}.f.s8{grid-column:span 8}.f.s12{grid-column:span 12}
-@media (max-width:720px){.f,.f.s3,.f.s4,.f.s8{grid-column:span 12}}
+.f.s2{grid-column:span 2}.f.s3{grid-column:span 3}.f.s4{grid-column:span 4}.f.s6{grid-column:span 6}.f.s8{grid-column:span 8}.f.s12{grid-column:span 12}
+@media (max-width:720px){.f,.f.s2,.f.s3,.f.s4,.f.s6,.f.s8{grid-column:span 12}}
 .l{font-weight:600;font-size:14px}
 .req{color:var(--orange)}
 .hint{font-size:12.5px;color:var(--muted)}
@@ -185,40 +185,30 @@ footer button{background:none;border:0;padding:0;color:var(--muted);text-decorat
   <section class="guide" aria-label="Orientações">
     <h2>Orientações ao responsável técnico</h2>
     <ol>
-      <li>Preencha um laudo por unidade habitacional vistoriada. As seções seguem a ordem do modelo da Defesa Civil. Os dados do evento e do responsável técnico ficam gravados neste aparelho e são reaproveitados nos laudos seguintes.</li>
+      <li>Preencha um laudo por unidade habitacional vistoriada. As seções seguem a ordem e a numeração do modelo da Defesa Civil. Os dados do evento e do responsável técnico ficam gravados neste aparelho e são reaproveitados nos laudos seguintes.</li>
       <li>Em frente ao imóvel, toque em <b>Registrar localização do imóvel</b>: o celular capta a posição, mostra o ponto no mapa e preenche endereço, bairro e coordenadas. As fotos tiradas pelo botão <b>Fotografar</b> recebem a localização automaticamente.</li>
       <li>Os textos técnicos são sugeridos a partir das marcações e podem ser livremente editados. O conteúdo final é de responsabilidade do engenheiro que assina o laudo.</li>
       <li>Todos os laudos ficam salvos no aparelho e podem ser reabertos em <b>Meus laudos</b>. Ao fim de cada dia, salve uma <b>cópia de segurança</b> e envie para você mesmo pelo WhatsApp ou e-mail.</li>
       <li>O site funciona sem internet depois de aberto uma vez com sinal. Para facilitar, use “Adicionar à tela inicial” no menu do navegador.</li>
-      <li>Cada laudo gerado é enviado automaticamente à coordenação, em PDF e em Word. Em <b>Meus laudos</b>, a situação mostra “enviado à coordenação” ou “envio aguardando internet”. Os imóveis já vistoriados podem ser consultados no <a href="mapa.html">mapa dos laudos</a>.</li>
+      <li>Cada laudo gerado é enviado automaticamente à coordenação, em PDF e em Word. Em <b>Meus laudos</b>, a situação mostra “Enviado à coordenação” ou “Envio aguardando internet”. Os imóveis já vistoriados podem ser consultados no <a href="mapa.html">mapa dos laudos</a>.</li>
       <li>Gere o laudo em PDF e <b>assine digitalmente pelo gov.br</b>, no Assinador do ITI (<a href="https://assinador.iti.br" target="_blank" rel="noopener">assinador.iti.br</a>), com conta gov.br nível prata ou ouro. Somente o PDF assinado deve ser entregue à Defesa Civil.</li>
     </ol>
   </section>
   <div class="meta-line"><span id="saveState">Salvo neste aparelho</span><span id="bkState"></span><button type="button" id="btnList">Meus laudos (<span id="histCount">0</span>)</button><button type="button" id="btnNew2">Iniciar novo laudo</button><a href="mapa.html">Mapa dos imóveis vistoriados</a></div>
 
   <details class="sec" id="secA" open>
-    <summary><h2>1 e 4 · Município e evento adverso</h2><span class="st" data-st="A"></span></summary>
+    <summary><h2>1. Identificação do município</h2><span class="st" data-st="A"></span></summary>
     <div class="body">
       <div class="grid">
-        <div class="f s8"><label class="l" for="mun">Município <span class="req">*</span></label><input type="text" id="mun" data-k="mun"></div>
-        <div class="f s4"><label class="l" for="uf">UF <span class="req">*</span></label><input type="text" id="uf" data-k="uf" maxlength="2"></div>
-        <div class="f s8"><label class="l" for="evento">Tipo de evento adverso <span class="req">*</span></label><select id="evento" data-k="evento"></select></div>
-        <div class="f s4"><label class="l" for="cobrade">COBRADE</label><input type="text" id="cobrade" data-k="cobrade"></div>
-        <div class="f s12" id="eventoOutroWrap" hidden><label class="l" for="eventoOutro">Tipo de evento (descrição)</label><input type="text" id="eventoOutro" data-k="eventoOutro"></div>
-        <div class="f s4"><label class="l" for="dtOcorr">Data da ocorrência <span class="req">*</span></label><input type="date" id="dtOcorr" data-k="dtOcorr"></div>
-        <div class="f s4"><label class="l" for="hrEvento">Horário do evento</label><input type="text" id="hrEvento" data-k="hrEvento" placeholder="Ex.: 03h30 ou madrugada"></div>
+        <div class="f s6"><label class="l" for="mun">Município <span class="req">*</span></label><input type="text" id="mun" data-k="mun"></div>
+        <div class="f s2"><label class="l" for="uf">UF <span class="req">*</span></label><input type="text" id="uf" data-k="uf" maxlength="2"></div>
         <div class="f s4"><label class="l" for="dtLaudo">Data e hora da elaboração <span class="req">*</span></label><input type="datetime-local" id="dtLaudo" data-k="dtLaudo"></div>
-        <div class="f s12">
-          <div class="lrow"><label class="l" for="descEvento">Caracterização do evento adverso <span class="req">*</span></label><button class="restore" type="button" data-regen="descEvento" hidden>Restaurar texto-padrão</button></div>
-          <textarea id="descEvento" data-k="descEvento" data-auto="1"></textarea>
-          <span class="hint">Complemente com dados medidos (rajadas, precipitação acumulada) quando disponíveis nos boletins oficiais.</span>
-        </div>
       </div>
     </div>
   </details>
 
   <details class="sec" id="secB" open>
-    <summary><h2>2 · Responsável técnico</h2><span class="st" data-st="B"></span></summary>
+    <summary><h2>2. Identificação do responsável técnico</h2><span class="st" data-st="B"></span></summary>
     <div class="body">
       <div class="grid">
         <div class="f s8"><label class="l" for="rtNome">Nome completo <span class="req">*</span></label><input type="text" id="rtNome" data-k="rtNome" autocomplete="name"></div>
@@ -233,7 +223,7 @@ footer button{background:none;border:0;padding:0;color:var(--muted);text-decorat
   </details>
 
   <details class="sec" id="secC" open>
-    <summary><h2>3 · Unidade habitacional</h2><span class="st" data-st="C"></span></summary>
+    <summary><h2>3. Identificação da unidade habitacional</h2><span class="st" data-st="C"></span></summary>
     <div class="body">
       <div class="loc">
         <div class="loc-h">
@@ -259,25 +249,26 @@ footer button{background:none;border:0;padding:0;color:var(--muted);text-decorat
     </div>
   </details>
 
-  <details class="sec" id="secE" open>
-    <summary><h2>9 · Registro fotográfico</h2><span class="st" data-st="E"></span></summary>
+  <details class="sec" id="secJ" open>
+    <summary><h2>4. Caracterização do evento adverso</h2><span class="st" data-st="J"></span></summary>
     <div class="body">
-      <div class="upl">
-        <label class="btn pri"><input type="file" id="inCam" accept="image/*" capture="environment" hidden>Fotografar</label>
-        <label class="btn sec2"><input type="file" id="inFiles" accept="image/*" multiple hidden>Anexar da galeria</label>
-        <span class="hint">Inclua a vista geral da fachada, a cobertura, os ambientes internos atingidos e os detalhes dos danos.</span>
+      <div class="grid">
+        <div class="f s8"><label class="l" for="evento">Tipo de evento adverso <span class="req">*</span></label><select id="evento" data-k="evento"></select></div>
+        <div class="f s4"><label class="l" for="cobrade">COBRADE</label><input type="text" id="cobrade" data-k="cobrade"></div>
+        <div class="f s12" id="eventoOutroWrap" hidden><label class="l" for="eventoOutro">Tipo de evento (descrição)</label><input type="text" id="eventoOutro" data-k="eventoOutro"></div>
+        <div class="f s6"><label class="l" for="dtOcorr">Data da ocorrência <span class="req">*</span></label><input type="date" id="dtOcorr" data-k="dtOcorr"></div>
+        <div class="f s6"><label class="l" for="hrEvento">Horário do evento</label><input type="text" id="hrEvento" data-k="hrEvento" placeholder="Ex.: 03h30 ou madrugada"></div>
+        <div class="f s12">
+          <div class="lrow"><label class="l" for="descEvento">Caracterização do evento adverso <span class="req">*</span></label><button class="restore" type="button" data-regen="descEvento" hidden>Restaurar texto-padrão</button></div>
+          <textarea id="descEvento" data-k="descEvento" data-auto="1"></textarea>
+          <span class="hint">Complemente com dados medidos (rajadas, precipitação acumulada) quando disponíveis nos boletins oficiais.</span>
+        </div>
       </div>
-      <div class="photos" id="photos"></div>
-      <datalist id="phDesc">
-        <option>Vista geral da fachada</option><option>Cobertura com destelhamento</option><option>Madeiramento da cobertura danificado</option>
-        <option>Forro com infiltração</option><option>Fissura em alvenaria</option><option>Trinca em alvenaria</option><option>Esquadria danificada</option>
-        <option>Queda de muro</option><option>Instalações elétricas danificadas</option><option>Ambiente interno atingido</option><option>Colapso parcial de alvenaria</option>
-      </datalist>
     </div>
   </details>
 
   <details class="sec" id="secD" open>
-    <summary><h2>5 · Danos observados</h2><span class="st" data-st="D"></span></summary>
+    <summary><h2>5. Descrição dos danos observados</h2><span class="st" data-st="D"></span></summary>
     <div class="body">
       <div class="grid">
         <div class="q"><span class="l">Danos constatados <span class="req">*</span></span><div class="checks" data-check="danos"></div>
@@ -299,7 +290,7 @@ footer button{background:none;border:0;padding:0;color:var(--muted);text-decorat
   </details>
 
   <details class="sec" id="secF" open>
-    <summary><h2>6 · Segurança e habitabilidade</h2><span class="st" data-st="F"></span></summary>
+    <summary><h2>6. Avaliação de segurança e habitabilidade</h2><span class="st" data-st="F"></span></summary>
     <div class="body">
       <div class="grid">
         <div class="q"><span class="l">Condição da unidade <span class="req">*</span></span><div class="checks" data-radio="hab"></div></div>
@@ -312,28 +303,52 @@ footer button{background:none;border:0;padding:0;color:var(--muted);text-decorat
   </details>
 
   <details class="sec" id="secG" open>
-    <summary><h2>7 e 8 · Impactos humanos e medidas emergenciais</h2><span class="st" data-st="G"></span></summary>
+    <summary><h2>7. Impactos humanos e sociais</h2><span class="st" data-st="G"></span></summary>
     <div class="body">
       <div class="grid">
-        <div class="q"><span class="l">Impactos humanos e sociais</span><div class="checks" data-check="imp"></div>
+        <div class="q"><span class="l">Impactos identificados</span><div class="checks" data-check="imp"></div>
           <input type="text" class="other" id="impOutro" data-k="impOutro" placeholder="Outros impactos" hidden></div>
         <div class="f s12">
           <div class="lrow"><label class="l" for="impDesc">Descrição complementar</label><button class="restore" type="button" data-regen="impDesc" hidden>Restaurar texto-padrão</button></div>
           <textarea id="impDesc" data-k="impDesc" data-auto="1" style="min-height:70px"></textarea>
         </div>
-        <div class="q"><span class="l">Medidas emergenciais adotadas</span><div class="checks" data-check="med"></div>
+      </div>
+    </div>
+  </details>
+
+  <details class="sec" id="secK" open>
+    <summary><h2>8. Medidas emergenciais adotadas</h2><span class="st" data-st="K"></span></summary>
+    <div class="body">
+      <div class="grid">
+        <div class="q"><span class="l">Medidas adotadas</span><div class="checks" data-check="med"></div>
           <input type="text" class="other" id="medOutro" data-k="medOutro" placeholder="Outras medidas" hidden></div>
         <div class="f s12">
-          <div class="lrow"><label class="l" for="medDesc">Descrição</label><button class="restore" type="button" data-regen="medDesc" hidden>Restaurar texto-padrão</button></div>
+          <div class="lrow"><label class="l" for="medDesc">Descrição complementar</label><button class="restore" type="button" data-regen="medDesc" hidden>Restaurar texto-padrão</button></div>
           <textarea id="medDesc" data-k="medDesc" data-auto="1" style="min-height:70px"></textarea>
         </div>
       </div>
     </div>
   </details>
 
+  <details class="sec" id="secE" open>
+    <summary><h2>9. Registro fotográfico</h2><span class="st" data-st="E"></span></summary>
+    <div class="body">
+      <div class="upl">
+        <label class="btn pri"><input type="file" id="inCam" accept="image/*" capture="environment" hidden>Fotografar</label>
+        <label class="btn sec2"><input type="file" id="inFiles" accept="image/*" multiple hidden>Anexar da galeria</label>
+        <span class="hint">Inclua a vista geral da fachada, a cobertura, os ambientes internos atingidos e os detalhes dos danos.</span>
+      </div>
+      <div class="photos" id="photos"></div>
+      <datalist id="phDesc">
+        <option>Vista geral da fachada</option><option>Cobertura com destelhamento</option><option>Madeiramento da cobertura danificado</option>
+        <option>Forro com infiltração</option><option>Fissura em alvenaria</option><option>Trinca em alvenaria</option><option>Esquadria danificada</option>
+        <option>Queda de muro</option><option>Instalações elétricas danificadas</option><option>Ambiente interno atingido</option><option>Colapso parcial de alvenaria</option>
+      </datalist>
+    </div>
+  </details>
 
   <details class="sec" id="secI" open>
-    <summary><h2>10 · Conclusão técnica</h2><span class="st" data-st="I"></span></summary>
+    <summary><h2>10. Conclusão técnica</h2><span class="st" data-st="I"></span></summary>
     <div class="body">
       <div class="grid">
         <div class="f s12">
@@ -347,7 +362,7 @@ footer button{background:none;border:0;padding:0;color:var(--muted);text-decorat
   </details>
 
   <details class="sec" id="secHist">
-    <summary><h2>Meus laudos</h2><span class="ref">salvos neste aparelho</span></summary>
+    <summary><h2>Meus laudos</h2><span class="ref">Salvos neste aparelho</span></summary>
     <div class="body hist">
       <p class="note">Todos os laudos ficam salvos neste aparelho, com as fotos, e podem ser reabertos e corrigidos. Para não perder o trabalho se o celular for perdido ou o navegador for limpo, salve uma <b>cópia de segurança</b> ao fim de cada dia e envie o arquivo para você mesmo pelo WhatsApp, e-mail ou Google Drive. A cópia pode ser restaurada neste site em qualquer celular ou computador.</p>
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
@@ -660,13 +675,15 @@ function refreshAuto(){
 }
 
 const REQ={
-  A:[["mun","Município"],["uf","UF"],["evento","Tipo de evento"],["dtOcorr","Data da ocorrência"],["dtLaudo","Data e hora da elaboração"],["descEvento","Caracterização do evento"]],
+  A:[["mun","Município"],["uf","UF"],["dtLaudo","Data e hora da elaboração"]],
   B:[["rtNome","Nome do responsável técnico"],["rtProf","Profissão"],["rtReg","Registro de classe"]],
   C:[["famNome","Nome do responsável/família"],["end","Endereço"],["bairro","Bairro/localidade"],["area","Localização (urbana ou rural)"],["tipo","Tipo construtivo"]],
-  E:[["_fotos","Registro fotográfico"]],
+  J:[["evento","Tipo de evento"],["dtOcorr","Data da ocorrência"],["descEvento","Caracterização do evento"]],
   D:[["danos","Danos constatados"],["descDanos","Descrição técnica dos danos"]],
   F:[["hab","Condição de habitabilidade"],["avalTec","Avaliação técnica"]],
   G:[],
+  K:[],
+  E:[["_fotos","Registro fotográfico"]],
   I:[["conclusao","Conclusão técnica"]]
 };
 function filled(k){ if(k==="_fotos") return PHOTOS.length>0; const v=S[k]; return Array.isArray(v)?v.length>0:String(v??"").trim()!==""; }
@@ -676,8 +693,8 @@ function updateStatus(){
   for(const sec in REQ){
     const el=$(`[data-st="${sec}"]`); if(!el) continue;
     const m=REQ[sec].filter(([k])=>!filled(k)).length; tot+=m;
-    if(sec==="G"){ el.textContent=(S.imp.length||S.med.length)?"preenchido":"opcional"; el.className="st"+((S.imp.length||S.med.length)?" ok":""); continue; }
-    el.textContent= m? `${m} pendente${m>1?"s":""}` : "completo";
+    if(sec==="G"||sec==="K"){ const v=(sec==="G"?S.imp:S.med)||[]; el.textContent=v.length?"Preenchido":"Opcional"; el.className="st"+(v.length?" ok":""); continue; }
+    el.textContent= m? `${m} pendente${m>1?"s":""}` : "Completo";
     el.className="st "+(m?"pend":"ok");
   }
   const b=$("#btnPend");
@@ -1237,7 +1254,7 @@ function renderList(){
   else if(since){ el.innerHTML=`<b style="color:#9a4a10">${since} ${since>1?"laudos sem cópia de segurança":"laudo sem cópia de segurança"}</b>`; }
   else { el.textContent=`Cópia de segurança em ${new Date(bk.em).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}`; }
   const st={rascunho:"Em preenchimento",emitido:"PDF gerado"};
-  $("#histBody").innerHTML = L.length ? `<table><thead><tr><th>Família</th><th>Endereço</th><th>Situação</th><th>Atualizado</th><th></th></tr></thead><tbody>${L.map(r=>`<tr${r.id===CUR?' style="background:#f1f6f5"':""}><td>${esc(r.familia||"(sem identificação)")}${r.id===CUR?' <span class="hint">· aberto</span>':""}</td><td>${esc(r.endereco)}${r.bairro?" – "+esc(r.bairro):""}</td><td>${st[r.status]||r.status}${ENVIO_ON&&r.sync==="enviado"?'<br><span class="hint" style="color:var(--ok)">enviado à coordenação</span>':""}${ENVIO_ON&&r.sync==="pendente"?'<br><span class="hint" style="color:#9a4a10">envio aguardando internet</span>':""}</td><td>${esc(new Date(r.updated).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}))}</td><td style="white-space:nowrap">${r.id===CUR?"":`<button class="btn sec2 sm" data-open="${r.id}">Abrir</button> `}<button class="btn sec2 sm" data-del="${r.id}">Excluir</button></td></tr>`).join("")}</tbody></table>` : `<p class="empty">Nenhum laudo salvo ainda neste aparelho.</p>`;
+  $("#histBody").innerHTML = L.length ? `<table><thead><tr><th>Família</th><th>Endereço</th><th>Situação</th><th>Atualizado</th><th></th></tr></thead><tbody>${L.map(r=>`<tr${r.id===CUR?' style="background:#f1f6f5"':""}><td>${esc(r.familia||"(sem identificação)")}${r.id===CUR?' <span class="hint">· em edição</span>':""}</td><td>${esc(r.endereco)}${r.bairro?" – "+esc(r.bairro):""}</td><td>${st[r.status]||r.status}${ENVIO_ON&&r.sync==="enviado"?'<br><span class="hint" style="color:var(--ok)">Enviado à coordenação</span>':""}${ENVIO_ON&&r.sync==="pendente"?'<br><span class="hint" style="color:#9a4a10">Envio aguardando internet</span>':""}</td><td>${esc(new Date(r.updated).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}))}</td><td style="white-space:nowrap">${r.id===CUR?"":`<button class="btn sec2 sm" data-open="${r.id}">Abrir</button> `}<button class="btn sec2 sm" data-del="${r.id}">Excluir</button></td></tr>`).join("")}</tbody></table>` : `<p class="empty">Nenhum laudo salvo ainda neste aparelho.</p>`;
   $$("[data-open]").forEach(b=>b.onclick=()=>openLaudo(b.dataset.open));
   $$("[data-del]").forEach(b=>b.onclick=()=>askDelete(b.dataset.del));
 }
@@ -1394,7 +1411,7 @@ function toast(msg,err){ const t=$("#toast"); t.textContent=msg; t.classList.tog
   window.addEventListener("online",net); window.addEventListener("offline",net); net();
   afterLoad(); $("#geoStatus").hidden=true;
   if("serviceWorker" in navigator && (location.protocol==="https:"||location.hostname==="localhost")){ navigator.serviceWorker.register("sw.js").catch(()=>{}); }
-  if(S.rtNome && S.rtReg){ $("#secA").open=false; $("#secB").open=false; }
+  if(S.rtNome && S.rtReg){ $("#secA").open=false; $("#secB").open=false; $("#secJ").open=false; }
   document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="hidden") saveCurrent(); });
   window.addEventListener("pagehide",()=>{ store(LS_DRAFT,S); saveCurrent(); });
 })();
