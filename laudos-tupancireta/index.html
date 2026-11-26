@@ -48,6 +48,7 @@ main{max-width:1000px;margin:0 auto;padding:18px 20px 120px}
 .meta-line{display:flex;gap:18px;flex-wrap:wrap;font-size:13.5px;color:var(--muted);margin:-6px 0 14px}
 .meta-line b{color:var(--ink)}
 .meta-line button{background:none;border:0;padding:0;color:var(--teal);text-decoration:underline;cursor:pointer;font-size:13.5px}
+.meta-line a{color:var(--teal);font-size:13.5px}
 
 .sec{background:var(--paper);border:1px solid var(--line);margin-bottom:14px}
 .sec>summary{list-style:none;cursor:pointer;display:flex;align-items:baseline;gap:10px;padding:12px 18px;border-bottom:1px solid transparent}
@@ -186,11 +187,11 @@ footer button{background:none;border:0;padding:0;color:var(--muted);text-decorat
       <li>Os textos técnicos são sugeridos a partir das marcações e podem ser livremente editados. O conteúdo final é de responsabilidade do engenheiro que assina o laudo.</li>
       <li>Todos os laudos ficam salvos no aparelho e podem ser reabertos em <b>Meus laudos</b>. Ao fim de cada dia, salve uma <b>cópia de segurança</b> e envie para você mesmo pelo WhatsApp ou e-mail.</li>
       <li>O site funciona sem internet depois de aberto uma vez com sinal. Para facilitar, use “Adicionar à tela inicial” no menu do navegador.</li>
-      <li>Cada PDF gerado é enviado automaticamente à coordenação. Em <b>Meus laudos</b>, a situação mostra “enviado à coordenação” ou “envio aguardando internet”.</li>
+      <li>Cada laudo gerado é enviado automaticamente à coordenação, em PDF e em Word. Em <b>Meus laudos</b>, a situação mostra “enviado à coordenação” ou “envio aguardando internet”. Os imóveis já vistoriados podem ser consultados no <a href="mapa.html">mapa dos laudos</a>.</li>
       <li>Gere o laudo em PDF e <b>assine digitalmente pelo gov.br</b>, no Assinador do ITI (<a href="https://assinador.iti.br" target="_blank" rel="noopener">assinador.iti.br</a>), com conta gov.br nível prata ou ouro. Somente o PDF assinado deve ser entregue à Defesa Civil.</li>
     </ol>
   </section>
-  <div class="meta-line"><span id="saveState">Salvo neste aparelho</span><span id="bkState"></span><button type="button" id="btnList">Meus laudos (<span id="histCount">0</span>)</button><button type="button" id="btnNew2">Iniciar novo laudo</button></div>
+  <div class="meta-line"><span id="saveState">Salvo neste aparelho</span><span id="bkState"></span><button type="button" id="btnList">Meus laudos (<span id="histCount">0</span>)</button><button type="button" id="btnNew2">Iniciar novo laudo</button><a href="mapa.html">Mapa dos imóveis vistoriados</a></div>
 
   <details class="sec" id="secA" open>
     <summary><h2>1 e 4 · Município e evento adverso</h2><span class="st" data-st="A"></span></summary>
@@ -357,7 +358,7 @@ footer button{background:none;border:0;padding:0;color:var(--muted);text-decorat
 </main>
 
 <footer>
-  Os dados preenchidos ficam gravados neste aparelho e o laudo é gerado no próprio navegador. Ao gerar o PDF, uma cópia é enviada automaticamente à pasta da coordenação do Programa SENGE Solidário no Google Drive; sem internet, o envio é feito quando o sinal voltar. Iniciativa de engenharia voluntária do SENGE-RS · Programa SENGE Solidário, com base no modelo de laudo da Defesa Civil.
+  Os dados preenchidos ficam gravados neste aparelho e o laudo é gerado no próprio navegador. Ao gerar o laudo, uma cópia em PDF e em Word é enviada automaticamente à pasta da coordenação do Programa SENGE Solidário no Google Drive; sem internet, o envio é feito quando o sinal voltar. Iniciativa de engenharia voluntária do SENGE-RS · Programa SENGE Solidário, com base no modelo de laudo da Defesa Civil.
 </footer>
 
 <div class="bar"><div class="in">
@@ -1168,12 +1169,12 @@ async function generate(kind, force=false){
     const base=`Laudo_UH_${slug(S.mun)||"municipio"}_${slug(S.famNome)||"unidade"}_${(S.dtLaudo||nowLocal()).slice(0,10)}`;
     const ok=await saveFile(blob, `${base}.${kind}`);
     if(kind==="pdf") LAST_PDF={blob,name:`${base}.pdf`};
-    const sendNote = (kind==="pdf" && ENVIO_ON) ? (navigator.onLine?"<p>Uma cópia deste PDF está sendo enviada automaticamente à coordenação.</p>":"<p>Sem internet no momento: a cópia para a coordenação será enviada automaticamente quando o sinal voltar.</p>") : "";
+    const sendNote = (kind==="pdf" && ENVIO_ON) ? (navigator.onLine?"<p>Uma cópia do laudo, em PDF e em Word, está sendo enviada automaticamente à coordenação.</p>":"<p>Sem internet no momento: a cópia para a coordenação será enviada automaticamente quando o sinal voltar.</p>") : "";
     if(ok){ await saveCurrent({status:"emitido",arquivo:`${base}.${kind}`,emitido:new Date().toISOString()});
       if(kind==="pdf") modal(`<h3>Laudo gerado</h3><p>O arquivo <b>${esc(base)}.pdf</b> foi salvo. Para concluir a emissão, assine-o digitalmente pelo gov.br:</p><ol><li>Acesse <a href="https://assinador.iti.br" target="_blank" rel="noopener">assinador.iti.br</a> e entre com a conta gov.br (nível prata ou ouro).</li><li>Envie o PDF, posicione a assinatura sobre a linha do responsável técnico e confirme pelo aplicativo gov.br.</li><li>Baixe o arquivo assinado e entregue-o à Defesa Civil.</li></ol>${sendNote}<div class="acts"><button class="btn sec2" data-close>Fechar</button>${canShareFile(new File([blob],"x.pdf",{type:"application/pdf"}))?'<button class="btn sec2" id="mSharePdf">Enviar PDF</button>':""}<a class="btn org" href="https://assinador.iti.br" target="_blank" rel="noopener">Abrir o Assinador gov.br</a></div>`);
       if($("#mSharePdf")) $("#mSharePdf").onclick=sharePdf;
-      if(kind==="pdf") enqueueSend(CUR,blob,`${base}.pdf`);
-      else toast("Laudo em Word gerado. Para a entrega, gere o PDF e assine pelo gov.br."); }
+      enqueueSend(CUR,kind,blob,base);
+      if(kind!=="pdf") toast("Laudo em Word gerado. Para a entrega, gere o PDF e assine pelo gov.br."); }
   }catch(e){
     console.error(e); toast(e.message==="lib"?"Não foi possível carregar o gerador de arquivos. Verifique a conexão com a internet.":"Erro ao gerar o laudo. Tente novamente.",true);
   }finally{ btn.disabled=false; btn.innerHTML=old; }
@@ -1323,10 +1324,18 @@ function metaFor(s,ph){
   return {familia:s.famNome,cpf:s.cpf,endereco:s.end,bairro:s.bairro,coord:s.coord,mapa:mapsUrl(s.coord),tipo:(TIPOS.find(t=>t[0]===s.tipo)||["",""])[1],moradores:s.moradores,
     danos:(s.danos||[]).map(k=>(DANOS.find(d=>d[0]===k)||["",k])[1]).join("; "),hab:(HAB.find(x=>x[0]===s.hab)||["",""])[1],valor:s.valor,rt:s.rtNome,registro:s.rtReg,fotos:(ph||[]).length};
 }
-async function enqueueSend(id,blob,name){
+async function enqueueSend(id,kind,blob,base){
   if(!ENVIO_ON) return;
-  const pdf=await blobToB64(blob);
-  await IDB.set("fila:"+id,{id,nomePdf:name,pdf,meta:metaFor(S,PHOTOS)});
+  const q={id,meta:metaFor(S,PHOTOS)};
+  q[kind]=await blobToB64(blob); q[kind==="pdf"?"nomePdf":"nomeDocx"]=`${base}.${kind}`;
+  // gera também o outro formato, para a coordenação receber PDF e Word
+  const other=kind==="pdf"?"docx":"pdf";
+  try{
+    if(other==="pdf") await waitLib(()=>window.jspdf&&window.jspdf.jsPDF); else await waitLib(()=>window.docx&&window.docx.Packer);
+    const b2= other==="pdf" ? await buildPdf() : await buildDocx();
+    q[other]=await blobToB64(b2); q[other==="pdf"?"nomePdf":"nomeDocx"]=`${base}.${other}`;
+  }catch(e){ console.warn("outro formato não gerado",e); }
+  await IDB.set("fila:"+id,q);
   setSync(id,"pendente");
   trySend();
 }
