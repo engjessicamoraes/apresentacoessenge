@@ -166,7 +166,7 @@ footer button{background:none;border:0;padding:0;color:var(--muted);text-decorat
   <section class="guide" aria-label="Orientações">
     <h2>Orientações ao responsável técnico</h2>
     <ol>
-      <li>Preencha um laudo por unidade habitacional vistoriada. As seções seguem a numeração dos itens do modelo da Defesa Civil. Os dados do evento e do responsável técnico ficam gravados neste aparelho e são reaproveitados nos laudos seguintes.</li>
+      <li>Preencha um laudo por unidade habitacional vistoriada. As seções seguem a ordem do modelo da Defesa Civil. Os dados do evento e do responsável técnico ficam gravados neste aparelho e são reaproveitados nos laudos seguintes.</li>
       <li>Em frente ao imóvel, toque em <b>Registrar localização do imóvel</b>: o celular capta a posição, mostra o ponto no mapa e preenche endereço, bairro e coordenadas. As fotos tiradas pelo botão <b>Fotografar</b> recebem a localização automaticamente.</li>
       <li>Os textos técnicos são sugeridos a partir das marcações e podem ser livremente editados. O conteúdo final é de responsabilidade do engenheiro que assina o laudo.</li>
       <li>Todos os laudos ficam salvos no aparelho e podem ser reabertos em <b>Meus laudos</b>. Ao fim de cada dia, salve uma <b>cópia de segurança</b> e envie para você mesmo pelo WhatsApp ou e-mail.</li>
@@ -240,7 +240,7 @@ footer button{background:none;border:0;padding:0;color:var(--muted);text-decorat
   </details>
 
   <details class="sec" id="secE" open>
-    <summary><h2>10 · Registro fotográfico</h2><span class="st" data-st="E"></span></summary>
+    <summary><h2>9 · Registro fotográfico</h2><span class="st" data-st="E"></span></summary>
     <div class="body">
       <div class="upl">
         <label class="btn pri"><input type="file" id="inCam" accept="image/*" capture="environment" hidden>Fotografar</label>
@@ -311,24 +311,9 @@ footer button{background:none;border:0;padding:0;color:var(--muted);text-decorat
     </div>
   </details>
 
-  <details class="sec" id="secH" open>
-    <summary><h2>9 · Estimativa preliminar dos prejuízos</h2><span class="st" data-st="H"></span></summary>
-    <div class="body">
-      <div class="grid">
-        <div class="f s3"><label class="l" for="areaDano">Área atingida (m²)</label><input type="text" id="areaDano" data-k="areaDano" inputmode="decimal"></div>
-        <div class="f s3"><label class="l" for="custoUnit">Custo unitário (R$/m²)</label><input type="text" id="custoUnit" data-k="custoUnit" inputmode="decimal"></div>
-        <div class="f s3"><label class="l" for="outrosValor">Demais itens (R$)</label><input type="text" id="outrosValor" data-k="outrosValor" inputmode="decimal"></div>
-        <div class="f s3"><label class="l" for="valor">Valor estimado (R$) <span class="req">*</span></label><input type="text" id="valor" data-k="valor" data-auto="1" inputmode="decimal"></div>
-        <div class="f s12">
-          <div class="lrow"><label class="l" for="metod">Metodologia utilizada <span class="req">*</span></label><button class="restore" type="button" data-regen="metod" hidden>Restaurar texto-padrão</button></div>
-          <textarea id="metod" data-k="metod" data-auto="1" style="min-height:70px"></textarea>
-        </div>
-      </div>
-    </div>
-  </details>
 
   <details class="sec" id="secI" open>
-    <summary><h2>11 · Conclusão técnica</h2><span class="st" data-st="I"></span></summary>
+    <summary><h2>10 · Conclusão técnica</h2><span class="st" data-st="I"></span></summary>
     <div class="body">
       <div class="grid">
         <div class="f s12">
@@ -662,7 +647,6 @@ const REQ={
   D:[["danos","Danos constatados"],["descDanos","Descrição técnica dos danos"]],
   F:[["hab","Condição de habitabilidade"],["avalTec","Avaliação técnica"]],
   G:[],
-  H:[["valor","Valor estimado"],["metod","Metodologia"]],
   I:[["conclusao","Conclusão técnica"]]
 };
 function filled(k){ if(k==="_fotos") return PHOTOS.length>0; const v=S[k]; return Array.isArray(v)?v.length>0:String(v??"").trim()!==""; }
@@ -916,17 +900,13 @@ function blocks(){
   OPTS("",MED.map(([v,l])=>[v==="outros"?`Outros: ${S.med.includes("outros")&&S.medOutro.trim()?trimDot(S.medOutro):"____________"}`:l, S.med.includes(v)]));
   L("Descrição:"); P(S.medDesc);
 
-  H("9. ESTIMATIVA PRELIMINAR DOS PREJUÍZOS");
-  const vv=parseBR(S.valor); KV("Valor estimado dos danos", isNaN(vv)? (S.valor? "R$ "+S.valor : "") : "R$ "+money(vv));
-  L("Metodologia utilizada:"); P(S.metod);
-
-  H("10. REGISTRO FOTOGRÁFICO");
+  H("9. REGISTRO FOTOGRÁFICO");
   if(PHOTOS.length){
     P("As fotografias a seguir registram os danos observados na vistoria, com a respectiva descrição, a data e as coordenadas geográficas do registro.");
     PHOTOS.forEach((p,i)=>B.push({t:"img",n:i+1,desc:(p.desc||"").trim()||"Registro da vistoria",meta:[p.date?`Data: ${p.date}`:"", p.coord?`Coordenadas: ${coordTxt(p.coord)}`:"Coordenadas: não registradas pela câmera"].filter(Boolean).join("  ·  "),src:p.src,w:p.w,h:p.h}));
   } else P("Não foram anexadas fotografias.");
 
-  H("11. CONCLUSÃO TÉCNICA"); P(S.conclusao);
+  H("10. CONCLUSÃO TÉCNICA"); P(S.conclusao);
 
   B.push({t:"sign", local:S.localData, nome:S.rtNome, cargo:S.rtCargo, reg:S.rtReg, orgao:[S.rtOrgao, S.mun?`${S.mun}${S.uf?"/"+S.uf.toUpperCase():""}`:""].filter(Boolean).join(" · ")});
   return B;
@@ -1269,7 +1249,7 @@ async function exportCsv(){
       danos:(s.danos||[]).map(k=>(DANOS.find(d=>d[0]===k)||["",k])[1]).join("; "),hab:(HAB.find(x=>x[0]===s.hab)||["",""])[1],valor:s.valor,rt:s.rtNome,registro:s.rtReg,fotos:(r.PHOTOS||[]).length,situacao:it.status==="emitido"?"PDF gerado":"Em preenchimento"}); }
   for(const h of load(LS_HIST,[])) if(!rows.some(r=>(r.familia+"|"+r.endereco).toLowerCase()===h.key)) rows.push({...h,situacao:"PDF gerado"});
   if(!rows.length){ toast("Ainda não há laudos."); return; }
-  const cols=[["em","Atualizado em"],["familia","Responsável/família"],["cpf","CPF"],["endereco","Endereço"],["bairro","Bairro/localidade"],["coord","Coordenadas"],["mapa","Mapa"],["area","Área"],["tipo","Tipo construtivo"],["moradores","Moradores"],["danos","Danos"],["hab","Habitabilidade"],["valor","Valor estimado (R$)"],["rt","Responsável técnico"],["registro","Registro"],["fotos","Nº de fotos"],["situacao","Situação"]];
+  const cols=[["em","Atualizado em"],["familia","Responsável/família"],["cpf","CPF"],["endereco","Endereço"],["bairro","Bairro/localidade"],["coord","Coordenadas"],["mapa","Mapa"],["area","Área"],["tipo","Tipo construtivo"],["moradores","Moradores"],["danos","Danos"],["hab","Habitabilidade"],["rt","Responsável técnico"],["registro","Registro"],["fotos","Nº de fotos"],["situacao","Situação"]];
   const q=v=>`"${String(v??"").replace(/"/g,'""')}"`;
   const csv="﻿"+[cols.map(c=>q(c[1])).join(";"),...rows.map(r=>cols.map(([k])=>q(k==="em"&&r.em?new Date(r.em).toLocaleString("pt-BR"):r[k])).join(";"))].join("\r\n");
   await sendOrSave(new Blob([csv],{type:"text/csv"}),`Resumo_laudos_${slug(S.mun)||"UH"}_${new Date().toISOString().slice(0,10)}.csv`,"Planilha resumo","Planilha com os dados principais de todos os laudos deste aparelho, para a coordenação.");
