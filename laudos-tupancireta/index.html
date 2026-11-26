@@ -169,11 +169,12 @@ footer button{background:none;border:0;padding:0;color:var(--muted);text-decorat
       <li>Preencha um laudo por unidade habitacional vistoriada. As seções seguem a numeração dos itens do modelo da Defesa Civil. Os dados do evento e do responsável técnico ficam gravados neste aparelho e são reaproveitados nos laudos seguintes.</li>
       <li>Em frente ao imóvel, toque em <b>Registrar localização do imóvel</b>: o celular capta a posição, mostra o ponto no mapa e preenche endereço, bairro e coordenadas. As fotos tiradas pelo botão <b>Fotografar</b> recebem a localização automaticamente.</li>
       <li>Os textos técnicos são sugeridos a partir das marcações e podem ser livremente editados. O conteúdo final é de responsabilidade do engenheiro que assina o laudo.</li>
+      <li>Todos os laudos ficam salvos no aparelho e podem ser reabertos em <b>Meus laudos</b>. Ao fim de cada dia, salve uma <b>cópia de segurança</b> e envie para você mesmo pelo WhatsApp ou e-mail.</li>
       <li>O site funciona sem internet depois de aberto uma vez com sinal. Para facilitar, use “Adicionar à tela inicial” no menu do navegador.</li>
       <li>Gere o laudo em PDF e <b>assine digitalmente pelo gov.br</b>, no Assinador do ITI (<a href="https://assinador.iti.br" target="_blank" rel="noopener">assinador.iti.br</a>), com conta gov.br nível prata ou ouro. Somente o PDF assinado deve ser entregue à Defesa Civil.</li>
     </ol>
   </section>
-  <div class="meta-line"><span>Laudos emitidos neste aparelho: <b id="histCount">0</b></span><span id="saveState">Rascunho gravado neste aparelho</span><button type="button" id="btnNew2">Iniciar novo laudo</button></div>
+  <div class="meta-line"><span id="saveState">Salvo neste aparelho</span><span id="bkState"></span><button type="button" id="btnList">Meus laudos (<span id="histCount">0</span>)</button><button type="button" id="btnNew2">Iniciar novo laudo</button></div>
 
   <details class="sec" id="secA" open>
     <summary><h2>1 e 4 · Município e evento adverso</h2><span class="st" data-st="A"></span></summary>
@@ -341,11 +342,13 @@ footer button{background:none;border:0;padding:0;color:var(--muted);text-decorat
   </details>
 
   <details class="sec" id="secHist">
-    <summary><h2>Laudos emitidos neste aparelho</h2><span class="ref">resumo para a coordenação</span></summary>
+    <summary><h2>Meus laudos</h2><span class="ref">salvos neste aparelho</span></summary>
     <div class="body hist">
+      <p class="note">Todos os laudos ficam salvos neste aparelho, com as fotos, e podem ser reabertos e corrigidos. Para não perder o trabalho se o celular for perdido ou o navegador for limpo, salve uma <b>cópia de segurança</b> ao fim de cada dia e envie o arquivo para você mesmo pelo WhatsApp, e-mail ou Google Drive. A cópia pode ser restaurada neste site em qualquer celular ou computador.</p>
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
-        <button class="btn sec2 sm" type="button" id="btnCsv">Baixar planilha (CSV)</button>
-        <button class="btn sec2 sm" type="button" id="btnClearHist">Limpar histórico</button>
+        <button class="btn pri sm" type="button" id="btnBackup">Salvar cópia de segurança</button>
+        <label class="btn sec2 sm"><input type="file" id="inRestore" accept=".json,application/json" hidden>Restaurar cópia de segurança</label>
+        <button class="btn sec2 sm" type="button" id="btnCsv">Planilha resumo (CSV)</button>
       </div>
       <div id="histBody"></div>
     </div>
@@ -444,6 +447,7 @@ const IDB = {
   db:null,
   open(){ return new Promise(res=>{ try{ const r=indexedDB.open("senge_laudos_uh",1); r.onupgradeneeded=()=>r.result.createObjectStore("kv"); r.onsuccess=()=>{ this.db=r.result; res(true); }; r.onerror=()=>res(false); }catch(e){ res(false); } }); },
   set(k,v){ return new Promise(res=>{ if(!this.db) return res(false); try{ const t=this.db.transaction("kv","readwrite"); t.objectStore("kv").put(v,k); t.oncomplete=()=>res(true); t.onerror=()=>res(false); }catch(e){ res(false); } }); },
+  del(k){ return new Promise(res=>{ if(!this.db) return res(false); try{ const t=this.db.transaction("kv","readwrite"); t.objectStore("kv").delete(k); t.oncomplete=()=>res(true); t.onerror=()=>res(false); }catch(e){ res(false); } }); },
   get(k){ return new Promise(res=>{ if(!this.db) return res(null); try{ const r=this.db.transaction("kv").objectStore("kv").get(k); r.onsuccess=()=>res(r.result??null); r.onerror=()=>res(null); }catch(e){ res(null); } }); }
 };
 
@@ -676,10 +680,6 @@ function updateStatus(){
   $("#pendTxt").textContent= tot ? `${tot} ${tot>1?"itens pendentes":"item pendente"}` : "Laudo completo";
 }
 
-let saveT=null;
-function persist(){ clearTimeout(saveT); saveT=setTimeout(()=>{ const ok=store(LS_DRAFT,S); $("#saveState").textContent=ok?"Rascunho gravado neste aparelho":"Não foi possível gravar o rascunho neste navegador"; },250); }
-let phT=null;
-function persistPhotos(){ clearTimeout(phT); phT=setTimeout(()=>IDB.set("photos",PHOTOS),400); }
 function changed(){ refreshAuto(); syncVisibility(); updateStatus(); persist(); }
 
 function setEventoCobrade(){ const e=ev(); if(S.evento!=="outro"){ S.cobrade=e.cob; $("#cobrade").value=e.cob; } }
@@ -711,10 +711,9 @@ function bind(){
   $("#btnPend").addEventListener("click",showPend);
   $("#btnNew2").addEventListener("click",askNew);
   $("#btnCsv").addEventListener("click",exportCsv);
-  $("#btnClearHist").addEventListener("click",()=>{
-    modal(`<h3>Limpar histórico</h3><p>O resumo dos laudos emitidos neste aparelho será apagado. Os arquivos já baixados não são afetados.</p><div class="acts"><button class="btn sec2" data-close>Cancelar</button><button class="btn pri" id="mOk">Limpar</button></div>`);
-    $("#mOk").onclick=()=>{ store(LS_HIST,[]); renderHist(); closeModal(); };
-  });
+  $("#btnBackup").addEventListener("click",exportBackup);
+  $("#btnList").addEventListener("click",()=>{ const d=$("#secHist"); d.open=true; d.scrollIntoView({behavior:"smooth",block:"start"}); });
+  $("#inRestore").addEventListener("change",e=>{ const f=e.target.files[0]; if(f) importBackup(f); e.target.value=""; });
 }
 function showPend(){
   const miss=missing();
@@ -1138,57 +1137,155 @@ async function generate(kind, force=false){
     $("#mFix").onclick=()=>{ closeModal(); const sec=miss[0][0]; const det=$("#sec"+sec); if(det){ det.open=true; det.scrollIntoView({behavior:"smooth",block:"start"}); } };
     return;
   }
-  const btn=kind==="pdf"?$("#btnPdf"):$("#btnDocx"); const old=btn.innerHTML; btn.disabled=true; btn.innerHTML=`<span class="spinner"></span> Gerando…`;
+  const btn=kind==="pdf"?$("#btnPdf"):$("#btnDocx"); const old=btn.innerHTML; btn.disabled=true; btn.innerHTML=`<span class="busy"></span> Gerando…`;
   try{
     if(kind==="pdf") await waitLib(()=>window.jspdf&&window.jspdf.jsPDF); else await waitLib(()=>window.docx&&window.docx.Packer);
     const blob = kind==="pdf" ? await buildPdf() : await buildDocx();
     const base=`Laudo_UH_${slug(S.mun)||"municipio"}_${slug(S.famNome)||"unidade"}_${(S.dtLaudo||nowLocal()).slice(0,10)}`;
     const ok=await saveFile(blob, `${base}.${kind}`);
-    if(ok){ addHist(`${base}.${kind}`);
-      if(kind==="pdf") modal(`<h3>Laudo gerado</h3><p>O arquivo <b>${esc(base)}.pdf</b> foi salvo. Para concluir a emissão, assine-o digitalmente pelo gov.br:</p><ol><li>Acesse <a href="https://assinador.iti.br" target="_blank" rel="noopener">assinador.iti.br</a> e entre com a conta gov.br (nível prata ou ouro).</li><li>Envie o PDF, posicione a assinatura sobre a linha do responsável técnico e confirme pelo aplicativo gov.br.</li><li>Baixe o arquivo assinado e entregue-o à Defesa Civil.</li></ol><div class="acts"><button class="btn sec2" data-close>Fechar</button><a class="btn org" href="https://assinador.iti.br" target="_blank" rel="noopener">Abrir o Assinador gov.br</a></div>`);
+    if(kind==="pdf") LAST_PDF={blob,name:`${base}.pdf`};
+    if(ok){ await saveCurrent({status:"emitido",arquivo:`${base}.${kind}`,emitido:new Date().toISOString()});
+      if(kind==="pdf") modal(`<h3>Laudo gerado</h3><p>O arquivo <b>${esc(base)}.pdf</b> foi salvo. Para concluir a emissão, assine-o digitalmente pelo gov.br:</p><ol><li>Acesse <a href="https://assinador.iti.br" target="_blank" rel="noopener">assinador.iti.br</a> e entre com a conta gov.br (nível prata ou ouro).</li><li>Envie o PDF, posicione a assinatura sobre a linha do responsável técnico e confirme pelo aplicativo gov.br.</li><li>Baixe o arquivo assinado e entregue-o à Defesa Civil.</li></ol><div class="acts"><button class="btn sec2" data-close>Fechar</button>${canShareFile(new File([blob],"x.pdf",{type:"application/pdf"}))?'<button class="btn sec2" id="mSharePdf">Enviar PDF</button>':""}<a class="btn org" href="https://assinador.iti.br" target="_blank" rel="noopener">Abrir o Assinador gov.br</a></div>`);
+      if($("#mSharePdf")) $("#mSharePdf").onclick=sharePdf;
       else toast("Laudo em Word gerado. Para a entrega, gere o PDF e assine pelo gov.br."); }
   }catch(e){
     console.error(e); toast(e.message==="lib"?"Não foi possível carregar o gerador de arquivos. Verifique a conexão com a internet.":"Erro ao gerar o laudo. Tente novamente.",true);
   }finally{ btn.disabled=false; btn.innerHTML=old; }
 }
 
-/* ====================== Histórico ====================== */
-function addHist(arquivo){
-  const h=load(LS_HIST,[]); const key=(S.famNome+"|"+S.end).toLowerCase();
-  const habL=(HAB.find(x=>x[0]===S.hab)||["",""])[1];
-  const row={key, em:new Date().toISOString(), familia:S.famNome, cpf:S.cpf, endereco:S.end, bairro:S.bairro, coord:S.coord, moradores:S.moradores, area:S.area, tipo:(TIPOS.find(t=>t[0]===S.tipo)||["",""])[1],
-    danos:S.danos.map(k=>DANOS.find(d=>d[0]===k)[1]).join("; "), hab:habL, valor:S.valor, rt:S.rtNome, registro:S.rtReg, fotos:PHOTOS.length, arquivo};
-  const i=h.findIndex(r=>r.key===key); if(i>=0) h[i]=row; else h.unshift(row);
-  store(LS_HIST,h); renderHist();
+/* ====================== Laudos salvos no aparelho ====================== */
+const LS_CUR="senge_laudo_uh_atual", LS_BK="senge_laudo_uh_ultima_copia";
+let CUR=null, INDEX=[], LAST_PDF=null;
+function newId(){ return "L"+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+function hasContent(s,ph){ return !!((s.famNome||"").trim()||(s.end||"").trim()||(ph&&ph.length)||(s.danos||[]).length); }
+function summary(id,s,ph,prev){
+  return {id, created:prev?.created||new Date().toISOString(), updated:new Date().toISOString(), status:prev?.status||"rascunho", arquivo:prev?.arquivo||"", emitido:prev?.emitido||"",
+    familia:s.famNome||"", endereco:s.end||"", bairro:s.bairro||"", hab:(HAB.find(x=>x[0]===s.hab)||["",""])[1], valor:s.valor||"", fotos:(ph||[]).length};
 }
-function renderHist(){
-  const h=load(LS_HIST,[]); $("#histCount").textContent=h.length;
-  $("#histBody").innerHTML = h.length ? `<table><thead><tr><th>Data</th><th>Família</th><th>Endereço</th><th>Condição</th><th>Valor (R$)</th></tr></thead><tbody>${h.map(r=>`<tr><td>${esc(new Date(r.em).toLocaleDateString("pt-BR"))}</td><td>${esc(r.familia)}</td><td>${esc(r.endereco)}${r.bairro?" – "+esc(r.bairro):""}</td><td>${esc(r.hab)}</td><td>${esc(r.valor)}</td></tr>`).join("")}</tbody></table>` : `<p class="empty">Nenhum laudo emitido ainda neste aparelho.</p>`;
+let saveT=null;
+function persist(){ clearTimeout(saveT); saveT=setTimeout(saveCurrent,350); store(LS_DRAFT,S); }
+function persistPhotos(){ persist(); }
+async function saveCurrent(extra){
+  clearTimeout(saveT);
+  if(!CUR) CUR=newId();
+  store(LS_CUR,CUR);
+  if(!hasContent(S,PHOTOS) && !extra){ return; }
+  const i=INDEX.findIndex(x=>x.id===CUR); const prev=i>=0?INDEX[i]:null;
+  const sm=Object.assign(summary(CUR,S,PHOTOS,prev),extra||{});
+  if(i>=0) INDEX[i]=sm; else INDEX.unshift(sm);
+  const ok1=await IDB.set("laudo:"+CUR,{id:CUR,S,PHOTOS}); const ok2=await IDB.set("index",INDEX);
+  $("#saveState").textContent=(ok1&&ok2)?`Salvo neste aparelho às ${new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}`:"Atenção: não foi possível salvar neste navegador";
+  $("#saveState").style.color=(ok1&&ok2)?"":"var(--danger)";
+  renderList();
 }
-async function exportCsv(){
-  const h=load(LS_HIST,[]); if(!h.length){ toast("Não há laudos no histórico."); return; }
-  const cols=[["em","Data/hora"],["familia","Responsável/família"],["cpf","CPF"],["endereco","Endereço"],["bairro","Bairro/localidade"],["coord","Coordenadas"],["area","Área"],["tipo","Tipo construtivo"],["moradores","Moradores"],["danos","Danos"],["hab","Habitabilidade"],["valor","Valor estimado (R$)"],["rt","Responsável técnico"],["registro","Registro"],["fotos","Nº de fotos"],["arquivo","Arquivo"]];
-  const q=v=>`"${String(v??"").replace(/"/g,'""')}"`;
-  const csv="﻿"+[cols.map(c=>q(c[1])).join(";"),...h.map(r=>cols.map(([k])=>q(k==="em"?new Date(r.em).toLocaleString("pt-BR"):r[k])).join(";"))].join("\r\n");
-  const ok=await saveFile(new Blob([csv],{type:"text/csv"}),`Laudos_UH_${slug(S.mun)||"resumo"}_${new Date().toISOString().slice(0,10)}.csv`);
-  if(ok) toast("Planilha gerada.");
+async function openLaudo(id){
+  await saveCurrent();
+  const r=await IDB.get("laudo:"+id); if(!r){ toast("Laudo não encontrado neste aparelho.",true); return; }
+  CUR=id; store(LS_CUR,CUR);
+  S=Object.assign(structuredClone(DEFAULTS),r.S); S._auto=r.S._auto||{}; PHOTOS=r.PHOTOS||[];
+  toUI(); renderPhotos(); changed(); afterLoad();
+  $("#secC").open=true; window.scrollTo({top:0,behavior:"smooth"});
+  toast(`Laudo aberto: ${S.famNome||"sem identificação"}.`);
+}
+function afterLoad(){
+  const pc=parseCoord(S.coord);
+  if(pc){ const w=()=>window.L?showMap(pc[0],pc[1]):setTimeout(w,300); w(); $("#btnGeo").textContent="Registrar novamente"; }
+  else { $("#map").hidden=true; $("#geoStatus").hidden=true; $("#btnGeo").textContent="Registrar localização do imóvel"; }
+}
+function askDelete(id){
+  const it=INDEX.find(x=>x.id===id);
+  modal(`<h3>Excluir laudo</h3><p>O laudo de <b>${esc(it?.familia||"sem identificação")}</b> e as suas fotos serão apagados deste aparelho. Os arquivos PDF e Word já baixados e as cópias de segurança não são afetados.</p><p>Esta ação não pode ser desfeita.</p><div class="acts"><button class="btn sec2" data-close>Cancelar</button><button class="btn pri" id="mDel" style="background:var(--danger)">Excluir</button></div>`);
+  $("#mDel").onclick=async()=>{ INDEX=INDEX.filter(x=>x.id!==id); await IDB.set("index",INDEX); await IDB.del("laudo:"+id); closeModal();
+    if(id===CUR){ CUR=null; newLaudo(true); } renderList(); toast("Laudo excluído."); };
+}
+function bkInfo(){ return load(LS_BK,null); }
+function renderList(){
+  const L=INDEX; $("#histCount").textContent=L.length;
+  const bk=bkInfo(); const since=L.filter(x=>!bk||x.updated>bk.em).length;
+  const el=$("#bkState");
+  if(!L.length){ el.textContent=""; }
+  else if(since){ el.innerHTML=`<b style="color:#9a4a10">${since} ${since>1?"laudos sem cópia de segurança":"laudo sem cópia de segurança"}</b>`; }
+  else { el.textContent=`Cópia de segurança em ${new Date(bk.em).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}`; }
+  const st={rascunho:"Em preenchimento",emitido:"PDF gerado"};
+  $("#histBody").innerHTML = L.length ? `<table><thead><tr><th>Família</th><th>Endereço</th><th>Situação</th><th>Atualizado</th><th></th></tr></thead><tbody>${L.map(r=>`<tr${r.id===CUR?' style="background:#f1f6f5"':""}><td>${esc(r.familia||"(sem identificação)")}${r.id===CUR?' <span class="hint">· aberto</span>':""}</td><td>${esc(r.endereco)}${r.bairro?" – "+esc(r.bairro):""}</td><td>${st[r.status]||r.status}</td><td>${esc(new Date(r.updated).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}))}</td><td style="white-space:nowrap">${r.id===CUR?"":`<button class="btn sec2 sm" data-open="${r.id}">Abrir</button> `}<button class="btn sec2 sm" data-del="${r.id}">Excluir</button></td></tr>`).join("")}</tbody></table>` : `<p class="empty">Nenhum laudo salvo ainda neste aparelho.</p>`;
+  $$("[data-open]").forEach(b=>b.onclick=()=>openLaudo(b.dataset.open));
+  $$("[data-del]").forEach(b=>b.onclick=()=>askDelete(b.dataset.del));
 }
 
-/* ====================== Novo laudo ====================== */
-function askNew(){
-  const h=load(LS_HIST,[]); const key=(S.famNome+"|"+S.end).toLowerCase();
-  const pend = (S.famNome||S.end||PHOTOS.length) && !h.some(r=>r.key===key);
-  modal(`<h3>Iniciar novo laudo?</h3><p>Os dados da unidade habitacional, as fotos e os textos serão apagados. O município, o evento e o responsável técnico permanecem preenchidos.</p>${pend?`<p style="color:var(--danger);font-weight:600">O laudo atual ainda não foi baixado.</p>`:""}<div class="acts"><button class="btn sec2" data-close>Cancelar</button><button class="btn pri" id="mNew">Iniciar novo laudo</button></div>`);
-  $("#mNew").onclick=()=>{ newLaudo(); closeModal(); };
+/* Cópia de segurança */
+async function exportBackup(){
+  await saveCurrent();
+  if(!INDEX.length){ toast("Ainda não há laudos para copiar."); return; }
+  const recs=[]; for(const it of INDEX){ const r=await IDB.get("laudo:"+it.id); if(r) recs.push({...r,meta:it}); }
+  const data=JSON.stringify({app:"laudos-uh-senge",versao:1,criado:new Date().toISOString(),responsavel:S.rtNome||"",laudos:recs});
+  const name=`Copia_laudos_${slug(S.rtNome)||"engenheiro"}_${nowLocal().replace(/[-:T]/g,"")}.json`;
+  const ok=await sendOrSave(new Blob([data],{type:"application/json"}),name,"Cópia de segurança dos laudos",
+    `Arquivo com ${recs.length} ${recs.length>1?"laudos":"laudo"} e as fotos. Envie para você mesmo (WhatsApp, e-mail ou Google Drive): ele pode ser aberto neste site em qualquer celular ou computador, pelo botão “Restaurar cópia de segurança”.`);
+  if(ok){ store(LS_BK,{em:new Date().toISOString()}); renderList(); }
 }
-function newLaudo(){
+async function importBackup(file){
+  try{
+    const j=JSON.parse(await file.text());
+    if(j.app!=="laudos-uh-senge"||!Array.isArray(j.laudos)) throw new Error("fmt");
+    let n=0, sk=0;
+    for(const r of j.laudos){
+      const ex=INDEX.find(x=>x.id===r.id);
+      if(ex && ex.updated>=r.meta.updated){ sk++; continue; }
+      await IDB.set("laudo:"+r.id,{id:r.id,S:r.S,PHOTOS:r.PHOTOS});
+      if(ex) Object.assign(ex,r.meta); else INDEX.push(r.meta); n++;
+    }
+    INDEX.sort((a,b)=>b.updated.localeCompare(a.updated)); await IDB.set("index",INDEX); renderList();
+    toast(n?`${n} ${n>1?"laudos restaurados":"laudo restaurado"}${sk?` · ${sk} já estavam atualizados`:""}.`:"Todos os laudos da cópia já estavam neste aparelho.");
+    $("#secHist").open=true;
+  }catch(e){ toast("Arquivo inválido: escolha uma cópia de segurança gerada por este site (.json).",true); }
+}
+
+/* Enviar (WhatsApp, e-mail, Drive) ou salvar no aparelho */
+function canShareFile(f){ try{ return !!(navigator.canShare && navigator.canShare({files:[f]})); }catch(e){ return false; } }
+function sendOrSave(blob,name,title,text){
+  const file=new File([blob],name,{type:blob.type||"application/octet-stream"});
+  if(!canShareFile(file)) return saveFile(blob,name);
+  return new Promise(res=>{
+    modal(`<h3>${esc(title)}</h3><p>${esc(text)}</p><div class="acts"><button class="btn sec2" id="mSave">Salvar no aparelho</button><button class="btn pri" id="mShare">Enviar (WhatsApp, e-mail, Drive)</button></div>`);
+    $("#mSave").onclick=async()=>{ closeModal(); res(await saveFile(blob,name)); };
+    $("#mShare").onclick=async()=>{ try{ await navigator.share({files:[file],title:name}); closeModal(); toast("Arquivo enviado."); res(true); }catch(e){ if(e&&e.name==="AbortError") return; closeModal(); res(await saveFile(blob,name)); } };
+  });
+}
+async function sharePdf(){
+  if(!LAST_PDF) return;
+  const f=new File([LAST_PDF.blob],LAST_PDF.name,{type:"application/pdf"});
+  try{ await navigator.share({files:[f],title:LAST_PDF.name}); }catch(e){}
+}
+
+/* CSV para a coordenação */
+async function exportCsv(){
+  await saveCurrent();
+  const rows=[];
+  for(const it of INDEX){ const r=await IDB.get("laudo:"+it.id); if(!r) continue; const s=r.S;
+    rows.push({em:it.updated,familia:s.famNome,cpf:s.cpf,endereco:s.end,bairro:s.bairro,coord:s.coord,mapa:mapsUrl(s.coord),area:s.area,tipo:(TIPOS.find(t=>t[0]===s.tipo)||["",""])[1],moradores:s.moradores,
+      danos:(s.danos||[]).map(k=>(DANOS.find(d=>d[0]===k)||["",k])[1]).join("; "),hab:(HAB.find(x=>x[0]===s.hab)||["",""])[1],valor:s.valor,rt:s.rtNome,registro:s.rtReg,fotos:(r.PHOTOS||[]).length,situacao:it.status==="emitido"?"PDF gerado":"Em preenchimento"}); }
+  for(const h of load(LS_HIST,[])) if(!rows.some(r=>(r.familia+"|"+r.endereco).toLowerCase()===h.key)) rows.push({...h,situacao:"PDF gerado"});
+  if(!rows.length){ toast("Ainda não há laudos."); return; }
+  const cols=[["em","Atualizado em"],["familia","Responsável/família"],["cpf","CPF"],["endereco","Endereço"],["bairro","Bairro/localidade"],["coord","Coordenadas"],["mapa","Mapa"],["area","Área"],["tipo","Tipo construtivo"],["moradores","Moradores"],["danos","Danos"],["hab","Habitabilidade"],["valor","Valor estimado (R$)"],["rt","Responsável técnico"],["registro","Registro"],["fotos","Nº de fotos"],["situacao","Situação"]];
+  const q=v=>`"${String(v??"").replace(/"/g,'""')}"`;
+  const csv="﻿"+[cols.map(c=>q(c[1])).join(";"),...rows.map(r=>cols.map(([k])=>q(k==="em"&&r.em?new Date(r.em).toLocaleString("pt-BR"):r[k])).join(";"))].join("\r\n");
+  await sendOrSave(new Blob([csv],{type:"text/csv"}),`Resumo_laudos_${slug(S.mun)||"UH"}_${new Date().toISOString().slice(0,10)}.csv`,"Planilha resumo","Planilha com os dados principais de todos os laudos deste aparelho, para a coordenação.");
+}
+
+/* Novo laudo */
+function askNew(){
+  if(!hasContent(S,PHOTOS)){ newLaudo(); return; }
+  modal(`<h3>Iniciar novo laudo</h3><p>O laudo atual (<b>${esc(S.famNome||"sem identificação")}</b>) fica salvo em <b>Meus laudos</b> e pode ser reaberto a qualquer momento. Os dados do evento e do responsável técnico são mantidos.</p><div class="acts"><button class="btn sec2" data-close>Cancelar</button><button class="btn pri" id="mNew">Iniciar novo laudo</button></div>`);
+  $("#mNew").onclick=()=>{ closeModal(); newLaudo(); };
+}
+async function newLaudo(silent){
+  if(CUR) await saveCurrent();
   const keep={}; KEEP_KEYS.forEach(k=>keep[k]=S[k]);
   const keepAuto={descEvento:S._auto.descEvento};
   S=structuredClone(DEFAULTS); Object.assign(S,keep); S._auto=keepAuto; S.dtLaudo=nowLocal();
-  PHOTOS=[]; renderPhotos(); persistPhotos();
-  toUI(); changed(); $("#geoStatus").hidden=true; $("#map").hidden=true; $("#btnGeo").textContent="Registrar localização do imóvel";
-  $("#secC").open=true; $("#secC").scrollIntoView({behavior:"smooth",block:"start"});
-  toast("Novo laudo iniciado.");
+  PHOTOS=[]; CUR=newId(); store(LS_CUR,CUR);
+  toUI(); renderPhotos(); changed(); afterLoad(); renderList();
+  if(!silent){ $("#secC").open=true; $("#secC").scrollIntoView({behavior:"smooth",block:"start"}); toast("Novo laudo iniciado."); }
 }
 
 /* ====================== Modal e aviso ====================== */
@@ -1201,17 +1298,29 @@ function toast(msg,err){ const t=$("#toast"); t.textContent=msg; t.classList.tog
 /* ====================== Início ====================== */
 (async function init(){
   buildOpts();
-  const saved=load(LS_DRAFT,null);
-  if(saved && typeof saved==="object"){ S=Object.assign(structuredClone(DEFAULTS),saved); S._auto=saved._auto||{}; }
+  await IDB.open();
+  INDEX=(await IDB.get("index"))||[];
+  CUR=load(LS_CUR,null);
+  let rec=CUR?await IDB.get("laudo:"+CUR):null;
+  if(rec){ S=Object.assign(structuredClone(DEFAULTS),rec.S); S._auto=rec.S._auto||{}; PHOTOS=rec.PHOTOS||[]; }
+  else {
+    // migração da versão anterior (rascunho único)
+    const saved=load(LS_DRAFT,null);
+    if(saved && typeof saved==="object"){ S=Object.assign(structuredClone(DEFAULTS),saved); S._auto=saved._auto||{}; }
+    const ph=await IDB.get("photos"); if(Array.isArray(ph)) PHOTOS=ph;
+    if(!CUR) CUR=newId();
+  }
   if(!S.dtLaudo) S.dtLaudo=nowLocal();
-  await IDB.open(); const ph=await IDB.get("photos"); if(Array.isArray(ph)) PHOTOS=ph;
-  toUI(); renderPhotos(); bind(); refreshAuto(); syncVisibility(); updateStatus(); renderHist(); initDownloads();
+  toUI(); renderPhotos(); bind(); refreshAuto(); syncVisibility(); updateStatus(); initDownloads();
+  await saveCurrent(); renderList();
+  try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist(); }catch(e){}
   const net=()=>{ $("#netBar").hidden=navigator.onLine; if(navigator.onLine && PENDING_ADDR){ const [a,b,q]=PENDING_ADDR; fillAddress(a,b,q); } };
   window.addEventListener("online",net); window.addEventListener("offline",net); net();
-  const pc=parseCoord(S.coord); if(pc){ const w=()=>window.L?showMap(pc[0],pc[1]):setTimeout(w,300); setTimeout(w,300); }
+  afterLoad(); $("#geoStatus").hidden=true;
   if("serviceWorker" in navigator && (location.protocol==="https:"||location.hostname==="localhost")){ navigator.serviceWorker.register("sw.js").catch(()=>{}); }
   if(S.rtNome && S.rtReg){ $("#secA").open=false; $("#secB").open=false; }
-  window.addEventListener("beforeunload",()=>{ store(LS_DRAFT,S); });
+  document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="hidden") saveCurrent(); });
+  window.addEventListener("pagehide",()=>{ store(LS_DRAFT,S); saveCurrent(); });
 })();
 
 </script>
