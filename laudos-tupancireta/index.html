@@ -377,11 +377,11 @@ const ENVIO = { url: "https://script.google.com/macros/s/AKfycbykogbUGmKCadTPeVR
 "use strict";
 /* ====================== Catálogos ====================== */
 const EVENTS = [
-  {k:"vendaval", nome:"vendaval", full:"Tempestade local/convectiva – Vendaval", cob:"1.3.2.1.5"},
-  {k:"tornado", nome:"tornado", full:"Tempestade local/convectiva – Tornado", cob:"1.3.2.1.1"},
-  {k:"granizo", nome:"granizo", full:"Tempestade local/convectiva – Granizo", cob:"1.3.2.1.3"},
-  {k:"chuvas", nome:"chuvas intensas", full:"Tempestade local/convectiva – Chuvas intensas", cob:"1.3.2.1.4"},
-  {k:"raios", nome:"tempestade de raios", full:"Tempestade local/convectiva – Tempestade de raios", cob:"1.3.2.1.2"},
+  {k:"vendaval", nome:"vendaval", full:"Vendaval", cob:"1.3.2.1.5"},
+  {k:"tornado", nome:"tornado", full:"Tornado", cob:"1.3.2.1.1"},
+  {k:"granizo", nome:"granizo", full:"Granizo", cob:"1.3.2.1.3"},
+  {k:"chuvas", nome:"chuvas intensas", full:"Chuvas intensas", cob:"1.3.2.1.4"},
+  {k:"raios", nome:"tempestade de raios", full:"Tempestade de raios", cob:"1.3.2.1.2"},
   {k:"inundacao", nome:"inundação", full:"Inundação", cob:"1.2.1.0.0"},
   {k:"enxurrada", nome:"enxurrada", full:"Enxurrada", cob:"1.2.2.0.0"},
   {k:"alagamento", nome:"alagamento", full:"Alagamento", cob:"1.2.3.0.0"},
@@ -466,7 +466,7 @@ function genEvento(){
   const hora = h ? (/\d/.test(h) ? `, por volta das ${h}` : `, durante a ${h.replace(/^(durante a|na|a)\s+/i,"")}`) : "";
   const local = `o município de ${S.mun||"—"}${S.uf?"/"+S.uf.toUpperCase():""}`;
   const F = {
-    vendaval:"temporal com vendaval (tempestade local/convectiva), com rajadas de vento de alta intensidade acompanhadas de chuva forte. O evento causou danos generalizados às edificações, sobretudo destelhamentos, além da queda de muros, árvores e estruturas da rede elétrica.",
+    vendaval:"temporal com vendaval, com rajadas de vento de alta intensidade acompanhadas de chuva forte. O evento causou danos generalizados às edificações, sobretudo destelhamentos, além da queda de muros, árvores e estruturas da rede elétrica.",
     tornado:"tornado, com ventos de velocidade muito elevada concentrados na faixa de passagem do fenômeno. As edificações situadas nessa faixa sofreram danos severos de cobertura, vedação e, em parte dos casos, de estrutura, agravados pelo lançamento de detritos.",
     granizo:"tempestade com precipitação de granizo. O impacto das pedras provocou a quebra de telhas, vidros e demais elementos expostos, com consequente infiltração de água nas edificações.",
     chuvas:"chuvas intensas, com elevado volume precipitado em curto intervalo de tempo, superior à capacidade de escoamento das coberturas e da drenagem urbana, o que resultou em infiltrações e alagamentos nas edificações.",
