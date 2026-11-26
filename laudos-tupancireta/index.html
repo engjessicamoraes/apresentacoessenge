@@ -27,7 +27,7 @@ a{color:var(--teal)}
 .brandbar .solid img{height:36px;display:block}
 .brandbar .solid b{display:block;font-size:17px}
 .brandbar .mote{text-align:center;font-weight:700;letter-spacing:.4px;line-height:1.2;font-size:14px}
-.brandbar .mote .m1{color:#00408A}.brandbar .mote .m2{color:#006EAD}
+.brandbar .mote .m1{color:#004642}.brandbar .mote .m2{color:#006EAD}
 .brandbar .mote br.mb{display:none}
 .brandbar .org{position:absolute;right:20px;top:21px;text-align:right;font-size:13px;color:var(--muted);line-height:1.3}
 .brandbar .parc{width:100%;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:26px;padding-top:9px;border-top:1px solid var(--line-2)}
@@ -957,7 +957,7 @@ async function buildDocx(){
       return new Table({width:{size:CW,type:WidthType.DXA},columnWidths:[2900,2900,1100,2738],borders:{top:NB,bottom:NB,left:NB,right:NB,insideHorizontal:NB,insideVertical:NB},rows:[new TableRow({children:[
         cell(2900,[new ImageRun({type:"png",data:dataUrlToU8(IMG.docSenge),transformation:{width:Math.round(lh*sw/sh),height:lh}})],AlignmentType.RIGHT),
         new TableCell({width:{size:2900,type:WidthType.DXA},verticalAlign:VerticalAlign.CENTER,margins:{left:120,right:120},borders:{top:NB,bottom:NB,left:DV,right:DV},children:[
-          new Paragraph({alignment:AlignmentType.CENTER,spacing:{after:0},children:[new TextRun({text:"SOLIDARIEDADE TÉCNICA",bold:true,color:"00408A",size:17,font:"Calibri"})]}),
+          new Paragraph({alignment:AlignmentType.CENTER,spacing:{after:0},children:[new TextRun({text:"SOLIDARIEDADE TÉCNICA",bold:true,color:"004642",size:17,font:"Calibri"})]}),
           new Paragraph({alignment:AlignmentType.CENTER,spacing:{after:0},children:[new TextRun({text:"& MÚTUA SOLIDÁRIA",bold:true,color:"006EAD",size:17,font:"Calibri"})]})]}),
         cell(1100,[new ImageRun({type:"png",data:dataUrlToU8(IMG.docMaos),transformation:{width:Math.round(mhh*mw/mh),height:mhh}})],AlignmentType.RIGHT),
         new TableCell({width:{size:2738,type:WidthType.DXA},verticalAlign:VerticalAlign.CENTER,margins:{left:60,right:60},borders:{top:NB,bottom:NB,left:NB,right:NB},children:[
@@ -1117,7 +1117,7 @@ async function buildPdf(){
       const tot=lw+gap*4+qw+mW+2.5+Math.max(w1,w2); let x=PW/2-tot/2;
       doc.addImage(IMG.docSenge,"PNG",x,7.5,lw,lh,"senge","FAST"); x+=lw+gap;
       doc.setDrawColor(207,216,214); doc.setLineWidth(0.25); doc.line(x,8.5,x,20.5); x+=gap;
-      font("bold",8.6); doc.setTextColor(0,64,138); doc.text(q1,x+qw/2,13.7,{align:"center"}); doc.setTextColor(0,110,173); doc.text(q2,x+qw/2,17.9,{align:"center"}); x+=qw+gap;
+      font("bold",8.6); doc.setTextColor(0,70,66); doc.text(q1,x+qw/2,13.7,{align:"center"}); doc.setTextColor(0,110,173); doc.text(q2,x+qw/2,17.9,{align:"center"}); x+=qw+gap;
       doc.line(x,8.5,x,20.5); x+=gap;
       doc.addImage(IMG.docMaos,"PNG",x,9,mW,mH,"maos","FAST"); x+=mW+2.5;
       color(TEAL); font("normal",10.5); doc.text(t1,x,13.6); font("bold",12); doc.text(t2,x,18.8); }
