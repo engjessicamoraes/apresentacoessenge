@@ -1,5 +1,5 @@
 /* Laudos UH – funcionamento sem internet */
-const VERSION = "laudos-uh-v16";
+const VERSION = "laudos-uh-v17";
 const CORE = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png",
   "./lib/jspdf.umd.min.js", "./lib/docx.iife.js", "./lib/exifr-lite.umd.js", "./lib/leaflet.min.js", "./lib/leaflet.min.css",
   "./lib/images/marker-icon.png", "./lib/images/marker-icon-2x.png", "./lib/images/marker-shadow.png"];
