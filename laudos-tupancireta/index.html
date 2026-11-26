@@ -6,6 +6,7 @@
 <title>Laudo de Engenharia – Unidades Habitacionais · SENGE-RS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 :root{--teal:#004642;--teal-2:#0a5650;--orange:#EE6A15;--ink:#1d2b2a;--muted:#5b6b69;--line:#cfd8d6;--line-2:#e3e9e8;--bg:#eef1f0;--paper:#fff;--danger:#a32116;--ok:#1d6b45}
@@ -75,6 +76,15 @@ input:focus,select:focus,textarea:focus{border-color:var(--teal);box-shadow:0 0 
 .ck input{width:18px;height:18px;margin:1px 0 0;accent-color:var(--teal);flex:none}
 .other{margin-top:8px;max-width:560px}
 
+.loc{border:1px solid var(--line);background:#f7f9f9;padding:12px 14px;margin-top:10px}
+.loc-h{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.loc-h .hint{flex:1;min-width:220px;font-size:13.5px}
+#map{height:260px;margin-top:12px;border:1px solid var(--line)}
+.loc-s{margin-top:8px;font-size:14px}
+.loc-s b{color:var(--teal)}
+.loc-s.warn{color:#8a3d0b}
+.loc-adv{margin-top:8px;font-size:13.5px;color:var(--muted)}
+.loc-adv summary{cursor:pointer}
 .upl{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px}
 .btn{border:1px solid transparent;border-radius:3px;padding:9px 16px;min-height:42px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none}
 .btn.pri{background:var(--teal);color:#fff}.btn.pri:hover{background:var(--teal-2)}
@@ -113,7 +123,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--teal);box-shadow:0 0 
 .bar .pend{background:none;border:0;padding:0;font-size:14px;color:var(--muted);cursor:pointer;text-align:left;flex:1;min-width:150px}
 .bar .pend b{color:#9a4a10;font-weight:600}
 .bar .pend.ok b{color:var(--ok)}
-@media (max-width:640px){.bar .btn{flex:1}}
+@media (max-width:640px){.bar .pend{flex-basis:100%}.bar .btn{flex:1;padding:8px 10px}}
 
 .hist table{width:100%;border-collapse:collapse;margin-top:10px;font-size:14px}
 .hist th,.hist td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line-2);vertical-align:top}
@@ -152,7 +162,7 @@ footer button{background:none;border:0;padding:0;color:var(--muted);text-decorat
     <h2>Orientações ao responsável técnico</h2>
     <ol>
       <li>Preencha um laudo por unidade habitacional vistoriada. As seções seguem a numeração dos itens do modelo da Defesa Civil. Os dados do evento e do responsável técnico ficam gravados neste aparelho e são reaproveitados nos laudos seguintes.</li>
-      <li>Fotografe com a localização do celular ativada: a data e as coordenadas de cada imagem são extraídas do próprio arquivo e constam do registro fotográfico.</li>
+      <li>Em frente ao imóvel, toque em <b>Registrar localização do imóvel</b>: o celular capta a posição, mostra o ponto no mapa e preenche endereço, bairro e coordenadas. As fotos tiradas pelo botão <b>Fotografar</b> recebem a localização automaticamente.</li>
       <li>Os textos técnicos são sugeridos a partir das marcações e podem ser livremente editados. O conteúdo final é de responsabilidade do engenheiro que assina o laudo.</li>
       <li>Gere o laudo em PDF e <b>assine digitalmente pelo gov.br</b>, no Assinador do ITI (<a href="https://assinador.iti.br" target="_blank" rel="noopener">assinador.iti.br</a>), com conta gov.br nível prata ou ouro. Somente o PDF assinado deve ser entregue à Defesa Civil.</li>
     </ol>
@@ -198,13 +208,22 @@ footer button{background:none;border:0;padding:0;color:var(--muted);text-decorat
   <details class="sec" id="secC" open>
     <summary><h2>3 · Unidade habitacional</h2><span class="st" data-st="C"></span></summary>
     <div class="body">
+      <div class="loc">
+        <div class="loc-h">
+          <button class="btn pri" type="button" id="btnGeo">Registrar localização do imóvel</button>
+          <span class="hint" id="geoHint">Faça em frente à casa, com a localização do celular ativada. As coordenadas, o endereço e o bairro são preenchidos automaticamente.</span>
+        </div>
+        <div id="map" hidden></div>
+        <div class="loc-s" id="geoStatus" hidden></div>
+        <details class="loc-adv"><summary>Coordenadas (preenchidas automaticamente)</summary>
+          <input type="text" id="coord" data-k="coord" placeholder="-29.080560, -53.835830" style="margin-top:6px">
+        </details>
+      </div>
       <div class="grid">
         <div class="f s8"><label class="l" for="famNome">Nome do responsável/família <span class="req">*</span></label><input type="text" id="famNome" data-k="famNome"></div>
         <div class="f s4"><label class="l" for="cpf">CPF</label><input type="text" id="cpf" data-k="cpf" inputmode="numeric" placeholder="000.000.000-00"><span class="hint" id="cpfHint"></span></div>
         <div class="f s8"><label class="l" for="end">Endereço completo <span class="req">*</span></label><input type="text" id="end" data-k="end"></div>
         <div class="f s4"><label class="l" for="bairro">Bairro/localidade <span class="req">*</span></label><input type="text" id="bairro" data-k="bairro"></div>
-        <div class="f s8"><label class="l" for="coord">Coordenadas geográficas</label><input type="text" id="coord" data-k="coord" placeholder="-29.080560, -53.835830"><span class="hint" id="coordHint">Obtidas da primeira foto com GPS ou da localização do aparelho.</span></div>
-        <div class="f s4" style="justify-content:flex-end"><button class="btn sec2" type="button" id="btnGeo">Usar localização do aparelho</button></div>
         <div class="q"><span class="l">Localização <span class="req">*</span></span><div class="checks two" data-radio="area"></div></div>
         <div class="q"><span class="l">Tipo construtivo <span class="req">*</span></span><div class="checks" data-radio="tipo"></div>
           <input type="text" class="other" id="tipoOutro" data-k="tipoOutro" placeholder="Descreva o tipo construtivo" hidden></div>
@@ -665,6 +684,8 @@ function bind(){
     if(k==="cpf"){ const m=cpfMask(el.value); if(m!==el.value) el.value=m; }
     if(k==="uf") el.value=el.value.toUpperCase();
     S[k]=el.value;
+    if(k==="end") S._endAuto=false; if(k==="bairro") S._bairroAuto=false;
+    if(k==="coord"){ const c=parseCoord(el.value); if(c){ S.coordSrc="manual"; showMap(c[0],c[1]); } }
     if(AUTO_KEYS.includes(k)){ const empty=!el.value.trim(); el.dataset.auto=empty?"1":"0"; S._auto[k]=empty; }
     if(k==="evento") setEventoCobrade();
     changed();
@@ -677,7 +698,7 @@ function bind(){
   });
   $$("[data-regen]").forEach(b=>b.addEventListener("click",()=>{ const k=b.dataset.regen; $("#"+k).dataset.auto="1"; S._auto[k]=true; changed(); }));
   $("#btnGeo").addEventListener("click",useGeo);
-  $("#inCam").addEventListener("change",e=>{ addFiles(e.target.files); e.target.value=""; });
+  $("#inCam").addEventListener("change",e=>{ addFiles(e.target.files,true); e.target.value=""; });
   $("#inFiles").addEventListener("change",e=>{ addFiles(e.target.files); e.target.value=""; });
   $("#btnPdf").addEventListener("click",()=>generate("pdf"));
   $("#btnDocx").addEventListener("click",()=>generate("docx"));
@@ -697,16 +718,80 @@ function showPend(){
 }
 
 /* ====================== Localização ====================== */
-function useGeo(){
-  if(!("geolocation" in navigator)){ toast("Este navegador não informa a localização. Digite as coordenadas ou use uma foto com GPS.",true); return; }
-  toast("Obtendo a localização…");
-  try{
-    navigator.geolocation.getCurrentPosition(p=>{
-      S.coord=`${p.coords.latitude.toFixed(6)}, ${p.coords.longitude.toFixed(6)}`; $("#coord").value=S.coord;
-      $("#coordHint").textContent=`Localização do aparelho (precisão de cerca de ${Math.round(p.coords.accuracy)} m).`; changed(); toast("Coordenadas preenchidas.");
-    },()=>toast("Não foi possível obter a localização nesta tela. Digite as coordenadas ou use uma foto com GPS.",true),{enableHighAccuracy:true,timeout:15000});
-  }catch(e){ toast("Não foi possível obter a localização nesta tela.",true); }
+/* ====================== Localização ====================== */
+let LAST_FIX=null, MAP=null, MARK=null;
+function fixStr(lat,lon){ return `${lat.toFixed(6)}, ${lon.toFixed(6)}`; }
+function getBestFix(ms=9000, target=15){
+  return new Promise((res,rej)=>{
+    if(!("geolocation" in navigator)) return rej(new Error("nogeo"));
+    let best=null, id=null, done=false;
+    const fin=()=>{ if(done) return; done=true; try{ navigator.geolocation.clearWatch(id); }catch(e){} best?res(best):rej(new Error("nofix")); };
+    try{
+      id=navigator.geolocation.watchPosition(p=>{
+        if(!best || p.coords.accuracy<best.acc) best={lat:p.coords.latitude, lon:p.coords.longitude, acc:p.coords.accuracy, t:Date.now()};
+        if(best.acc<=target) fin();
+      },err=>{ if(!best){ done=true; rej(err); } },{enableHighAccuracy:true,maximumAge:0,timeout:ms});
+    }catch(e){ return rej(e); }
+    setTimeout(fin,ms);
+  });
 }
+function geoErrMsg(e){
+  if(e && e.code===1) return "A localização foi bloqueada. Libere a permissão de localização para este site nas configurações do navegador e tente novamente.";
+  if(e && e.message==="nogeo") return "Este navegador não informa a localização.";
+  return "Não foi possível obter a localização. Verifique se o GPS do celular está ativado e tente novamente ao ar livre.";
+}
+async function useGeo(){
+  const btn=$("#btnGeo"), old=btn.innerHTML; btn.disabled=true; btn.innerHTML=`<span class="busy"></span> Obtendo localização…`;
+  setGeoStatus("Captando o sinal de GPS. Aguarde alguns segundos em frente ao imóvel.");
+  try{
+    const f=await getBestFix(); LAST_FIX=f;
+    setCoord(f.lat,f.lon,"gps",f.acc);
+    await fillAddress(f.lat,f.lon);
+  }catch(e){ setGeoStatus(geoErrMsg(e),true); toast(geoErrMsg(e),true); }
+  finally{ btn.disabled=false; btn.innerHTML= S.coord ? "Registrar novamente" : old; }
+}
+function setGeoStatus(html,warn){ const el=$("#geoStatus"); el.hidden=false; el.innerHTML=html; el.classList.toggle("warn",!!warn); }
+function setCoord(lat,lon,src,acc){
+  S.coord=fixStr(lat,lon); S.coordSrc=src; S.coordAcc=acc?Math.round(acc):"";
+  $("#coord").value=S.coord;
+  const srcTxt={gps:"GPS do celular",foto:"GPS da fotografia",mapa:"ponto ajustado no mapa"}[src]||"informada";
+  let msg=`<b>Localização registrada</b> (${srcTxt}${S.coordAcc?`, precisão de cerca de ${S.coordAcc} m`:""}). Confira o ponto no mapa; se necessário, arraste o marcador ou toque sobre a casa para ajustar.`;
+  setGeoStatus(msg, acc>50);
+  if(acc>50) $("#geoStatus").innerHTML+=` <br>A precisão está baixa: aguarde alguns segundos ao ar livre e toque em <b>Registrar novamente</b>, ou ajuste o ponto no mapa.`;
+  showMap(lat,lon);
+  // fotos sem localização herdam a do imóvel
+  let n=0; PHOTOS.forEach(p=>{ if(!p.coord){ p.coord=S.coord; p.gpsSrc="imovel"; n++; } });
+  if(n){ renderPhotos(); persistPhotos(); }
+  changed();
+}
+function showMap(lat,lon){
+  if(!window.L){ return; }
+  const box=$("#map"); box.hidden=false;
+  if(!MAP){
+    MAP=L.map(box,{zoomControl:true,attributionControl:true}).setView([lat,lon],18);
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>'}).addTo(MAP);
+    MAP.attributionControl.setPrefix(false);
+    MARK=L.marker([lat,lon],{draggable:true}).addTo(MAP);
+    MARK.on("dragend",()=>{ const p=MARK.getLatLng(); setCoord(p.lat,p.lng,"mapa"); fillAddress(p.lat,p.lng,true); });
+    MAP.on("click",e=>{ MARK.setLatLng(e.latlng); setCoord(e.latlng.lat,e.latlng.lng,"mapa"); fillAddress(e.latlng.lat,e.latlng.lng,true); });
+  } else { MARK.setLatLng([lat,lon]); MAP.setView([lat,lon],Math.max(MAP.getZoom(),17)); }
+  setTimeout(()=>MAP.invalidateSize(),60);
+}
+async function fillAddress(lat,lon,quiet){
+  try{
+    const r=await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1&accept-language=pt-BR`);
+    if(!r.ok) throw 0;
+    const a=(await r.json()).address||{};
+    const rua=a.road||a.pedestrian||a.residential||a.path||"";
+    const num=a.house_number||"";
+    const bai=a.suburb||a.neighbourhood||a.quarter||a.city_district||a.village||a.hamlet||"";
+    const filled=[];
+    if(rua && (!S.end.trim() || S._endAuto)){ S.end=num?`${rua}, ${num}`:`${rua}, nº ___`; S._endAuto=true; $("#end").value=S.end; filled.push("endereço"); }
+    if(bai && (!S.bairro.trim() || S._bairroAuto)){ S.bairro=bai; S._bairroAuto=true; $("#bairro").value=S.bairro; filled.push("bairro"); }
+    if(filled.length){ changed(); if(!quiet) toast(`Preenchidos: ${filled.join(" e ")}. Confira o número da casa.`); }
+  }catch(e){ /* sem internet ou serviço indisponível: segue só com as coordenadas */ }
+}
+function mapsUrl(c){ const p=parseCoord(c); return p?`https://www.google.com/maps?q=${p[0].toFixed(6)},${p[1].toFixed(6)}`:""; }
 
 /* ====================== Fotos ====================== */
 async function readExif(file){
@@ -731,24 +816,29 @@ async function compress(file){
   return {src:c.toDataURL("image/jpeg",0.82), w:c.width, h:c.height};
 }
 function fmtDate(d){ return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`; }
-async function addFiles(list){
+async function addFiles(list, fromCam){
   const files=[...(list||[])].filter(f=>/^image\//.test(f.type)||/\.(jpe?g|png|heic|webp)$/i.test(f.name));
   if(!files.length) return;
   toast(files.length>1?`Processando ${files.length} fotos…`:"Processando a foto…");
   let gpsFound=0;
+  const fresh=LAST_FIX && Date.now()-LAST_FIX.t<120000 && LAST_FIX.acc<=50;
+  const camFix = fromCam ? (fresh ? Promise.resolve(LAST_FIX) : getBestFix(6000,20).then(f=>{ LAST_FIX=f; return f; }).catch(()=>null)) : null;
   for(const f of files){
     try{
       const [x,img]=await Promise.all([readExif(f),compress(f)]);
       const d = x.DateTimeOriginal||x.CreateDate||x.ModifyDate;
       const dt = d instanceof Date && !isNaN(d) ? fmtDate(d) : (f.lastModified? fmtDate(new Date(f.lastModified)) : "");
       const gps = typeof x.latitude==="number" && typeof x.longitude==="number";
-      if(gps) gpsFound++;
-      PHOTOS.push({id:Date.now()+"_"+Math.random().toString(36).slice(2,7), ...img, desc:"", date:dt, coord: gps?`${x.latitude.toFixed(6)}, ${x.longitude.toFixed(6)}`:"", gps});
-      if(gps && !S.coord.trim()){ S.coord=PHOTOS[PHOTOS.length-1].coord; $("#coord").value=S.coord; $("#coordHint").textContent="Coordenadas obtidas do GPS da foto."; }
+      let coord="", src="";
+      if(gps){ coord=fixStr(x.latitude,x.longitude); src="foto"; gpsFound++; }
+      else if(fromCam){ const f2=await camFix; if(f2){ coord=fixStr(f2.lat,f2.lon); src="aparelho"; gpsFound++; } }
+      if(!coord && S.coord.trim()){ coord=S.coord; src="imovel"; }
+      PHOTOS.push({id:Date.now()+"_"+Math.random().toString(36).slice(2,7), ...img, desc:"", date:dt, coord, gps:!!coord, gpsSrc:src});
+      if((src==="foto"||src==="aparelho") && !S.coord.trim()){ const c=parseCoord(coord); setCoord(c[0],c[1],src==="foto"?"foto":"gps"); fillAddress(c[0],c[1]); }
     }catch(e){ toast(`Não foi possível ler a foto ${f.name}.`,true); }
   }
   renderPhotos(); persistPhotos(); changed();
-  toast(`${files.length} ${files.length>1?"fotos adicionadas":"foto adicionada"}${gpsFound?` · ${gpsFound} com GPS`:" · sem GPS na foto"}.`);
+  toast(`${files.length} ${files.length>1?"fotos adicionadas":"foto adicionada"}${gpsFound?" com localização.":"."}`);
 }
 function renderPhotos(){
   const box=$("#photos");
@@ -756,7 +846,7 @@ function renderPhotos(){
     <div class="ph" data-id="${p.id}">
       <img src="${p.src}" alt="Imagem ${i+1}">
       <div>
-        <div class="t">Imagem ${i+1}<span>${p.gps?"georreferenciada":"sem GPS no arquivo"}</span></div>
+        <div class="t">Imagem ${i+1}<span>${({foto:"localização da própria foto",aparelho:"localização do celular no momento da foto",imovel:"localização do imóvel"})[p.gpsSrc]||(p.coord?"localização informada":"sem localização")}</span></div>
         <div class="m">
           <input class="full" type="text" list="phDesc" data-pk="desc" value="${esc(p.desc)}" placeholder="Legenda (ex.: Cobertura com destelhamento)">
           <input type="text" data-pk="date" value="${esc(p.date)}" placeholder="Data e hora">
@@ -796,6 +886,7 @@ function blocks(){
   H("3. IDENTIFICAÇÃO DA UNIDADE HABITACIONAL");
   KV("Nome do responsável/família",S.famNome); KV("CPF",S.cpf); KV("Endereço completo",S.end); KV("Bairro/localidade",S.bairro);
   KV("Coordenadas geográficas",coordTxt(S.coord));
+  if(mapsUrl(S.coord)) B.push({t:"link",k:"Localização no mapa",v:"abrir no Google Maps",url:mapsUrl(S.coord)});
   OPTS("Área urbana:",[["Sim",S.area==="urbana"],["Não",S.area==="rural"]]);
   OPTS("Área rural:",[["Sim",S.area==="rural"],["Não",S.area==="urbana"]]);
   OPTS("Tipo construtivo:",TIPOS.map(([v,l])=>[v==="outro"?`Outro: ${S.tipo==="outro"&&S.tipoOutro.trim()?S.tipoOutro.trim():"____________"}`:l, S.tipo===v]));
@@ -843,7 +934,7 @@ function imgSize(src){ return new Promise(r=>{ const i=new Image(); i.onload=()=
 /* ====================== Word (.docx) ====================== */
 async function buildDocx(){
   const d=window.docx;
-  const {Document,Packer,Paragraph,TextRun,ImageRun,Header,Footer,AlignmentType,TabStopType,BorderStyle,PageNumber}=d;
+  const {Document,Packer,Paragraph,TextRun,ImageRun,Header,Footer,AlignmentType,TabStopType,BorderStyle,PageNumber,ExternalHyperlink}=d;
   const TEAL="004642", ORANGE="EE6A15", GREY="5D6F6D";
   const CW=9638; // largura útil em twips (A4, margens de 2 cm)
   const [sw,sh]=await imgSize(IMG.docSenge), [mw,mh]=await imgSize(IMG.docMaos);
@@ -872,6 +963,8 @@ async function buildDocx(){
       kids.push(new Paragraph({alignment:AlignmentType.CENTER,spacing:{after:200},children:[new TextRun({text:TITLE2,size:22,color:GREY})]}));
     } else if(b.t==="h"){
       kids.push(new Paragraph({keepNext:true,spacing:{before:260,after:120},border:{bottom:{style:BorderStyle.SINGLE,size:8,color:ORANGE,space:2}},children:[new TextRun({text:b.text,bold:true,color:TEAL,size:23})]}));
+    } else if(b.t==="link"){
+      kids.push(new Paragraph({spacing:{after:70},children:[new TextRun({text:b.k+": ",bold:true}),new ExternalHyperlink({link:b.url,children:[new TextRun({text:b.v,color:"0B5CAD",underline:{}})]})]}));
     } else if(b.t==="kv"){
       kids.push(new Paragraph({spacing:{after:70},children:[new TextRun({text:b.k+": ",bold:true}),new TextRun({text:b.v})]}));
     } else if(b.t==="label"){
@@ -965,6 +1058,10 @@ async function buildPdf(){
     } else if(b.t==="h"){
       ensure(18); y+=3.2; font("bold",11.5); color(TEAL); doc.text(b.text,ML,y+4); y+=6;
       doc.setDrawColor(...ORANGE); doc.setLineWidth(0.45); doc.line(ML,y,PW-MR,y); y+=3.2;
+    } else if(b.t==="link"){
+      ensure(6); font("bold",10.5); color(INK); const lbl=b.k+": "; doc.text(lbl,ML,y+3.7); const lw=doc.getTextWidth(lbl);
+      font("normal",10.5); doc.setTextColor(11,92,173); doc.textWithLink(b.v,ML+lw,y+3.7,{url:b.url}); const vw=doc.getTextWidth(b.v);
+      doc.setDrawColor(11,92,173); doc.setLineWidth(0.2); doc.line(ML+lw,y+4.4,ML+lw+vw,y+4.4); y+=LH(10.5)+0.9;
     } else if(b.t==="kv"){
       runs([{text:b.k+": ",bold:true},{text:b.v}],10.5); y+=0.9;
     } else if(b.t==="label"){
@@ -1082,7 +1179,7 @@ function newLaudo(){
   const keepAuto={descEvento:S._auto.descEvento};
   S=structuredClone(DEFAULTS); Object.assign(S,keep); S._auto=keepAuto; S.dtLaudo=nowLocal();
   PHOTOS=[]; renderPhotos(); persistPhotos();
-  toUI(); changed(); $("#coordHint").textContent="Obtidas da primeira foto com GPS ou da localização do aparelho.";
+  toUI(); changed(); $("#geoStatus").hidden=true; $("#map").hidden=true; $("#btnGeo").textContent="Registrar localização do imóvel";
   $("#secC").open=true; $("#secC").scrollIntoView({behavior:"smooth",block:"start"});
   toast("Novo laudo iniciado.");
 }
@@ -1107,6 +1204,7 @@ function toast(msg,err){ const t=$("#toast"); t.textContent=msg; t.classList.tog
 })();
 
 </script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/lite.umd.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/docx@9.16.0/dist/index.iife.js"></script>
