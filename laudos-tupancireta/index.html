@@ -944,20 +944,20 @@ async function buildDocx(){
   const [sw,sh]=await imgSize(IMG.docSenge), [mw,mh]=await imgSize(IMG.docMaos), [uw,uh]=await imgSize(IMG.docMutua);
   const PARC=await parceiros();
   const lh=58, mhh=42;
-  const header=new Header({children:[new Paragraph({
-    tabStops:[{type:TabStopType.CENTER,position:Math.round(CW/2)},{type:TabStopType.RIGHT,position:CW}],
-    border:{bottom:{style:BorderStyle.SINGLE,size:12,color:ORANGE,space:6}},
-    spacing:{after:0},
-    children:[
+  const pk=[]; PARC.forEach((p,i)=>{ if(i) pk.push(new TextRun({text:"        "})); const hh=Math.round(p.hw*0.74); pk.push(new ImageRun({type:"png",data:dataUrlToU8(p.src),transformation:{width:Math.round(hh*p.r),height:hh}})); });
+  const header=new Header({children:[
+    new Paragraph({alignment:AlignmentType.CENTER,spacing:{after:60},children:[
       new ImageRun({type:"png",data:dataUrlToU8(IMG.docSenge),transformation:{width:Math.round(lh*sw/sh),height:lh}}),
-      new TextRun({text:"\t"}),
-      new TextRun({text:"\t"}),
+      new TextRun({text:"          "}),
       new ImageRun({type:"png",data:dataUrlToU8(IMG.docMaos),transformation:{width:Math.round(mhh*mw/mh),height:mhh}}),
-      new TextRun({text:"  Programa ",color:TEAL,size:20,font:"Calibri"}),
-      new TextRun({text:"SENGE Solidário",bold:true,color:TEAL,size:20,font:"Calibri"})
-    ]})]});
-  const pk=[]; PARC.forEach((p,i)=>{ if(i) pk.push(new TextRun({text:"      "})); const hh=Math.round(p.hw*0.82); pk.push(new ImageRun({type:"png",data:dataUrlToU8(p.src),transformation:{width:Math.round(hh*p.r),height:hh}})); });
-  const footer=new Footer({children:[new Paragraph({alignment:AlignmentType.CENTER,spacing:{after:90},children:pk}),new Paragraph({
+      new TextRun({text:"  Programa ",color:TEAL,size:21,font:"Calibri"}),
+      new TextRun({text:"SENGE Solidário",bold:true,color:TEAL,size:23,font:"Calibri"})
+    ]}),
+    new Paragraph({alignment:AlignmentType.CENTER,spacing:{after:0},
+      border:{top:{style:BorderStyle.SINGLE,size:4,color:"E3E9E8",space:4},bottom:{style:BorderStyle.SINGLE,size:12,color:ORANGE,space:6}},
+      children:pk})
+  ]});
+  const footer=new Footer({children:[new Paragraph({
     tabStops:[{type:TabStopType.RIGHT,position:CW}],
     border:{top:{style:BorderStyle.SINGLE,size:4,color:"D5E0DE",space:4}},
     children:[new TextRun({text:FOOT,size:16,color:GREY}),new TextRun({text:"\t",size:16}),new TextRun({children:["Página ",PageNumber.CURRENT," de ",PageNumber.TOTAL_PAGES],size:16,color:GREY})]
@@ -1008,7 +1008,7 @@ async function buildDocx(){
 async function buildPdf(){
   const {jsPDF}=window.jspdf;
   const doc=new jsPDF({unit:"mm",format:"a4",compress:true});
-  const PW=210, PH=297, ML=20, MR=20, MT=30, MB=30, W=PW-ML-MR;
+  const PW=210, PH=297, ML=20, MR=20, MT=42, MB=22, W=PW-ML-MR;
   const TEAL=[0,70,66], ORANGE=[238,106,21], INK=[30,43,42], GREY=[93,111,109];
   let y=MT;
   const LH=(fs)=>fs*0.3528*1.32;
@@ -1098,14 +1098,19 @@ async function buildPdf(){
   const PARC=await parceiros();
   for(let i=1;i<=n;i++){
     doc.setPage(i);
-    const lh=14; doc.addImage(IMG.docSenge,"PNG",ML,9,lh*sw/sh,lh,"senge","FAST");
-    font("bold",9); const t2="SENGE Solidário"; const w2=doc.getTextWidth(t2); font("normal",9); const t1="Programa "; const w1=doc.getTextWidth(t1);
-    const mH=11, mW=mH*mw/mh; const xr=PW-MR; const xt=xr-w2-w1;
-    doc.addImage(IMG.docMaos,"PNG",xt-mW-2,11.5,mW,mH,"maos","FAST");
-    color(TEAL); font("normal",9); doc.text(t1,xt,18); font("bold",9); doc.text(t2,xt+w1,18);
-    doc.setDrawColor(...ORANGE); doc.setLineWidth(0.7); doc.line(ML,24.5,PW-MR,24.5);
-    { const g=7; let tot=PARC.reduce((s,p)=>s+p.hm*p.r,0)+g*(PARC.length-1); let x=PW/2-tot/2; const base=PH-16.2;
-      PARC.forEach(p=>{ const w=p.hm*p.r; doc.addImage(p.src,"PNG",x,base-p.hm-(9-p.hm)/2,w,p.hm,p.k,"FAST"); x+=w+g; }); }
+    { // linha 1: SENGE-RS e Programa SENGE Solidário, centralizados e em destaque
+      const lh=14, lw=lh*sw/sh, mH=11, mW=mH*mw/mh, gap=7;
+      font("normal",10.5); const t1="Programa", w1=doc.getTextWidth(t1); font("bold",12); const t2="SENGE Solidário", w2=doc.getTextWidth(t2);
+      const tot=lw+gap*2+mW+2.5+Math.max(w1,w2); let x=PW/2-tot/2;
+      doc.addImage(IMG.docSenge,"PNG",x,7.5,lw,lh,"senge","FAST"); x+=lw+gap;
+      doc.setDrawColor(207,216,214); doc.setLineWidth(0.25); doc.line(x,8.5,x,20.5); x+=gap;
+      doc.addImage(IMG.docMaos,"PNG",x,9,mW,mH,"maos","FAST"); x+=mW+2.5;
+      color(TEAL); font("normal",10.5); doc.text(t1,x,13.6); font("bold",12); doc.text(t2,x,18.8); }
+    doc.setDrawColor(227,233,232); doc.setLineWidth(0.2); doc.line(ML,24,PW-MR,24);
+    { // linha 2: entidades parceiras, menores
+      const g=8, k=0.85; let tot=PARC.reduce((s,p)=>s+p.hm*k*p.r,0)+g*(PARC.length-1); let x=PW/2-tot/2;
+      PARC.forEach(p=>{ const h=p.hm*k, w=h*p.r; doc.addImage(p.src,"PNG",x,29.6-h/2,w,h,p.k,"FAST"); x+=w+g; }); }
+    doc.setDrawColor(...ORANGE); doc.setLineWidth(0.7); doc.line(ML,35.5,PW-MR,35.5);
     doc.setDrawColor(213,224,222); doc.setLineWidth(0.2); doc.line(ML,PH-14,PW-MR,PH-14);
     font("normal",8); color(GREY); doc.text(FOOT,ML,PH-9.5); doc.text(`Página ${i} de ${n}`,PW-MR,PH-9.5,{align:"right"});
   }
