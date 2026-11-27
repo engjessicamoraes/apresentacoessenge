@@ -83,6 +83,8 @@ main{max-width:1000px;margin:0 auto;padding:18px 20px 28px}
 
 .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px 16px;margin-top:10px}
 .f{grid-column:span 6;display:flex;flex-direction:column;gap:4px}
+.opt{font-weight:400;color:var(--muted);font-size:13px}
+.fixo{display:flex;align-items:baseline;flex-wrap:wrap;gap:6px 12px;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:10px 12px}.fixo span{font-size:13.5px;color:var(--muted)}.fixo b{font-size:17px;color:var(--teal)}.fixo .cob{margin-left:auto}
 .f.s2{grid-column:span 2}.f.s3{grid-column:span 3}.f.s4{grid-column:span 4}.f.s6{grid-column:span 6}.f.s8{grid-column:span 8}.f.s12{grid-column:span 12}
 @media (max-width:720px){.f,.f.s2,.f.s3,.f.s4,.f.s6,.f.s8{grid-column:span 12}}
 .l{font-weight:600;font-size:14px}
@@ -232,13 +234,12 @@ footer button{background:none;border:0;padding:0;color:var(--muted);text-decorat
     <div class="body">
       <div class="grid">
         <div class="f s8"><label class="l" for="rtNome">Nome completo <span class="req">*</span></label><input type="text" id="rtNome" data-k="rtNome" autocomplete="name"></div>
-        <div class="f s4"><label class="l" for="rtProf">Profissão <span class="req">*</span></label><input type="text" id="rtProf" data-k="rtProf" list="profs" placeholder="Ex.: Engenheiro(a) Civil ou Arquiteto(a) e Urbanista"></div>
-        <div class="f s4"><label class="l" for="rtReg">Registro profissional (CREA ou CAU) <span class="req">*</span></label><input type="text" id="rtReg" data-k="rtReg" placeholder="CREA-RS 000000 ou CAU A000000-0"></div>
-        <div class="f s4"><label class="l" for="rtCargo">Cargo/Função</label><input type="text" id="rtCargo" data-k="rtCargo"></div>
-        <div class="f s4"><label class="l" for="rtOrgao">Órgão/Entidade</label><input type="text" id="rtOrgao" data-k="rtOrgao"></div>
+        <div class="f s4"><label class="l" for="rtProf">Profissão <span class="req">*</span></label><select id="rtProf" data-k="rtProf"><option value="">Selecione</option><option>Engenheiro(a) Civil</option><option>Arquiteto(a) e Urbanista</option><option>Engenheiro(a) Civil e de Segurança do Trabalho</option><option>Engenheiro(a) Eletricista</option><option>Engenheiro(a) Mecânico(a)</option><option value="__outra">Outra profissão</option></select></div>
+        <div class="f s12" id="rtProfOutroWrap" hidden><label class="l" for="rtProfOutro">Informe a profissão</label><input type="text" id="rtProfOutro" data-k="rtProfOutro"></div>
+        <div class="f s6"><label class="l" for="rtReg">Registro profissional (CREA ou CAU) <span class="req">*</span></label><input type="text" id="rtReg" data-k="rtReg" placeholder="CREA-RS 000000 ou CAU A000000-0"></div>
+        <div class="f s6"><label class="l" for="rtCargo">Cargo/Função</label><input type="text" id="rtCargo" data-k="rtCargo"></div>
       </div>
-      <p class="note">A assinatura é feita pelo gov.br, em nome do profissional indicado acima. Confira se o nome informado coincide com o do titular da conta gov.br.</p>
-      <datalist id="profs"><option>Engenheiro(a) Civil</option><option>Arquiteto(a) e Urbanista</option><option>Engenheiro(a) Civil e de Segurança do Trabalho</option><option>Engenheiro(a) Eletricista</option></datalist>
+      <p class="note">O laudo é emitido em nome do SENGE-RS – Programa SENGE Solidário, e a assinatura é feita pelo gov.br, em nome do profissional indicado acima. Confira se o nome informado coincide com o do titular da conta gov.br.</p>
     </div>
   </details>
 
@@ -273,16 +274,14 @@ footer button{background:none;border:0;padding:0;color:var(--muted);text-decorat
     <summary><h2>4. Caracterização do evento adverso</h2><span class="st" data-st="J"></span></summary>
     <div class="body">
       <div class="grid">
-        <div class="f s8"><label class="l" for="evento">Tipo de evento adverso <span class="req">*</span></label><select id="evento" data-k="evento"></select></div>
-        <div class="f s4"><label class="l" for="cobrade">COBRADE</label><input type="text" id="cobrade" data-k="cobrade"></div>
-        <div class="f s12" id="eventoOutroWrap" hidden><label class="l" for="eventoOutro">Tipo de evento (descrição)</label><input type="text" id="eventoOutro" data-k="eventoOutro"></div>
+        <div class="f s12"><div class="fixo"><span>Tipo de evento adverso</span><b>Tornado</b><span class="cob">COBRADE 1.3.2.1.1</span></div></div>
+        <div hidden><select id="evento" data-k="evento"></select><input type="text" id="cobrade" data-k="cobrade"><div id="eventoOutroWrap"><input type="text" id="eventoOutro" data-k="eventoOutro"></div></div>
         <div class="f s6"><label class="l" for="dtOcorr">Data da ocorrência <span class="req">*</span></label><input type="date" id="dtOcorr" data-k="dtOcorr"></div>
         <div class="f s6"><label class="l" for="hrEvento">Horário do evento</label><input type="text" id="hrEvento" data-k="hrEvento" placeholder="Ex.: 03h30 ou madrugada"></div>
-        <div class="f s12">
-          <div class="lrow"><label class="l" for="descEvento">Caracterização do evento adverso <span class="req">*</span></label><button class="restore" type="button" data-regen="descEvento" hidden>Restaurar texto-padrão</button></div>
+        <div class="f s12" hidden>
           <textarea id="descEvento" data-k="descEvento" data-auto="1"></textarea>
-          <span class="hint">Complemente com dados medidos (rajadas, precipitação acumulada) quando disponíveis nos boletins oficiais.</span>
         </div>
+        <p class="note" style="grid-column:1/-1">A caracterização do evento é incluída automaticamente no laudo, com o texto padronizado para o tornado, a data e o horário informados acima.</p>
       </div>
     </div>
   </details>
@@ -302,7 +301,7 @@ footer button{background:none;border:0;padding:0;color:var(--muted);text-decorat
       <div class="grid">
         <div class="f s12"><label class="l" for="obsDanos">Observação complementar</label><input type="text" id="obsDanos" data-k="obsDanos" placeholder="Ex.: trinca inclinada na parede dos fundos, junto à janela da cozinha"></div>
         <div class="f s12">
-          <div class="lrow"><label class="l" for="descDanos">Descrição técnica detalhada <span class="req">*</span></label><button class="restore" type="button" data-regen="descDanos" hidden>Restaurar texto-padrão</button></div>
+          <div class="lrow"><label class="l" for="descDanos">Descrição técnica detalhada <span class="opt">(opcional)</span></label><button class="restore" type="button" data-regen="descDanos" hidden>Restaurar texto-padrão</button></div>
           <textarea id="descDanos" data-k="descDanos" data-auto="1" style="min-height:150px"></textarea>
         </div>
       </div>
@@ -315,7 +314,7 @@ footer button{background:none;border:0;padding:0;color:var(--muted);text-decorat
       <div class="grid">
         <div class="q"><span class="l">Condição da unidade <span class="req">*</span></span><div class="checks" data-radio="hab"></div></div>
         <div class="f s12">
-          <div class="lrow"><label class="l" for="avalTec">Avaliação técnica <span class="req">*</span></label><button class="restore" type="button" data-regen="avalTec" hidden>Restaurar texto-padrão</button></div>
+          <div class="lrow"><label class="l" for="avalTec">Avaliação técnica <span class="opt">(opcional)</span></label><button class="restore" type="button" data-regen="avalTec" hidden>Restaurar texto-padrão</button></div>
           <textarea id="avalTec" data-k="avalTec" data-auto="1" style="min-height:90px"></textarea>
         </div>
       </div>
@@ -436,7 +435,7 @@ const MED = [["intParcial","Interdição parcial"],["intTotal","Interdição tot
 const STRUCT = ["trincas","recalque","fundacao","colapsoParcial","colapsoTotal","destruicao"];
 
 const AUTO_KEYS = ["descEvento","descDanos","avalTec","impDesc","medDesc","metod","conclusao","localData","valor"];
-const KEEP_KEYS = ["mun","uf","evento","eventoOutro","cobrade","dtOcorr","hrEvento","descEvento","rtNome","rtProf","rtReg","rtCargo","rtOrgao"];
+const KEEP_KEYS = ["mun","uf","evento","eventoOutro","cobrade","dtOcorr","hrEvento","descEvento","rtNome","rtProf","rtProfOutro","rtReg","rtCargo","rtOrgao"];
 const LS_DRAFT = "senge_laudo_uh_rascunho_v1", LS_HIST = "senge_laudo_uh_historico_v1";
 
 /* ====================== Utilitários ====================== */
@@ -465,8 +464,8 @@ function cpfMask(v){ const d=v.replace(/\D/g,"").slice(0,11); return d.replace(/
 
 /* ====================== Estado ====================== */
 const DEFAULTS = {
-  mun:"Tupanciretã", uf:"RS", evento:"vendaval", eventoOutro:"", cobrade:"1.3.2.1.5", dtOcorr:"2026-11-20", hrEvento:"madrugada", dtLaudo:"",
-  descEvento:"", rtNome:"", rtProf:"", rtReg:"", rtCargo:"Profissional voluntário(a)", rtOrgao:"SENGE-RS – Programa SENGE Solidário",
+  mun:"Tupanciretã", uf:"RS", evento:"tornado", eventoOutro:"", cobrade:"1.3.2.1.1", dtOcorr:"2026-11-20", hrEvento:"madrugada", dtLaudo:"",
+  descEvento:"", rtNome:"", rtProf:"", rtProfOutro:"", rtReg:"", rtCargo:"Profissional voluntário(a)", rtOrgao:"SENGE-RS – Programa SENGE Solidário",
   famNome:"", cpf:"", end:"", bairro:"", coord:"", area:"", tipo:"", tipoOutro:"", moradores:"",
   danos:[], danosOutro:"", cobTipo:"", cobPct:"", madeir:"", obsDanos:"", descDanos:"",
   hab:"", avalTec:"", imp:[], impOutro:"", impDesc:"", med:[], medOutro:"", medDesc:"",
@@ -664,7 +663,17 @@ function buildOpts(){
   mk('[data-check="med"]',MED,"checkbox","med");
 }
 
+const PROFS=["Engenheiro(a) Civil","Arquiteto(a) e Urbanista","Engenheiro(a) Civil e de Segurança do Trabalho","Engenheiro(a) Eletricista","Engenheiro(a) Mecânico(a)"];
+const ORGAO="SENGE-RS – Programa SENGE Solidário";
+function prof(){ return S.rtProf==="__outra" ? (S.rtProfOutro||"").trim() : (S.rtProf||""); }
+function normalize(){
+  S._auto=S._auto||{};
+  S.evento="tornado"; S.cobrade="1.3.2.1.1"; S.eventoOutro=""; S._auto.descEvento=true;
+  S.rtOrgao=ORGAO;
+  if(S.rtProf && S.rtProf!=="__outra" && !PROFS.includes(S.rtProf)){ S.rtProfOutro=S.rtProf; S.rtProf="__outra"; }
+}
 function toUI(){
+  normalize();
   $$("[data-k]").forEach(el=>{ const k=el.dataset.k; el.value=S[k]??""; if(AUTO_KEYS.includes(k)) el.dataset.auto=(S._auto[k]===false)?"0":"1"; });
   $$('input[type=radio]').forEach(r=>{ r.checked=S[r.name]===r.value; });
   $$('input[type=checkbox]').forEach(c=>{ c.checked=(S[c.name]||[]).includes(c.value); });
@@ -673,6 +682,7 @@ function toUI(){
 
 function syncVisibility(){
   $("#eventoOutroWrap").hidden=S.evento!=="outro";
+  $("#rtProfOutroWrap").hidden=S.rtProf!=="__outra";
   $("#tipoOutro").hidden=S.tipo!=="outro";
   $("#danosOutro").hidden=!has("outros");
   $("#impOutro").hidden=!S.imp.includes("outros");
@@ -694,15 +704,15 @@ const REQ={
   A:[["mun","Município"],["uf","UF"],["dtLaudo","Data e hora da elaboração"]],
   B:[["rtNome","Nome do responsável técnico"],["rtProf","Profissão"],["rtReg","Registro de classe"]],
   C:[["famNome","Nome do responsável/família"],["end","Endereço"],["bairro","Bairro/localidade"],["area","Localização (urbana ou rural)"],["tipo","Tipo construtivo"]],
-  J:[["evento","Tipo de evento"],["dtOcorr","Data da ocorrência"],["descEvento","Caracterização do evento"]],
-  D:[["danos","Danos constatados"],["descDanos","Descrição técnica dos danos"]],
-  F:[["hab","Condição de habitabilidade"],["avalTec","Avaliação técnica"]],
+  J:[["dtOcorr","Data da ocorrência"]],
+  D:[["danos","Danos constatados"]],
+  F:[["hab","Condição de habitabilidade"]],
   G:[],
   K:[],
   E:[["_fotos","Registro fotográfico"]],
   I:[["conclusao","Conclusão técnica"]]
 };
-function filled(k){ if(k==="_fotos") return PHOTOS.length>0; const v=S[k]; return Array.isArray(v)?v.length>0:String(v??"").trim()!==""; }
+function filled(k){ if(k==="_fotos") return PHOTOS.length>0; if(k==="rtProf") return prof()!==""; const v=S[k]; return Array.isArray(v)?v.length>0:String(v??"").trim()!==""; }
 function missing(){ const out=[]; for(const sec in REQ) for(const [k,l] of REQ[sec]) if(!filled(k)) out.push([sec,k,l]); return out; }
 function updateStatus(){
   let tot=0;
@@ -728,6 +738,7 @@ function bind(){
     if(k==="cpf"){ const m=cpfMask(el.value); if(m!==el.value) el.value=m; }
     if(k==="uf") el.value=el.value.toUpperCase();
     S[k]=el.value;
+    if(k==="dtLaudo") S._dtManual=true;
     if(k==="end") S._endAuto=false; if(k==="bairro") S._bairroAuto=false;
     if(k==="coord"){ const c=parseCoord(el.value); if(c){ S.coordSrc="manual"; showMap(c[0],c[1]); } }
     if(AUTO_KEYS.includes(k)){ const empty=!el.value.trim(); el.dataset.auto=empty?"1":"0"; S._auto[k]=empty; }
@@ -924,7 +935,7 @@ function blocks(){
   KV("Tipo de Evento Adverso",evFull()); KV("COBRADE",S.cobrade); KV("Data da ocorrência",dBR(S.dtOcorr)); KV("Horário do evento",S.hrEvento);
 
   H("2. IDENTIFICAÇÃO DO RESPONSÁVEL TÉCNICO");
-  KV("Nome completo",S.rtNome); KV("Profissão",S.rtProf); KV("Registro de classe nº",S.rtReg); KV("Cargo/Função",S.rtCargo); KV("Órgão/Entidade",S.rtOrgao);
+  KV("Nome completo",S.rtNome); KV("Profissão",prof()); KV("Registro de classe nº",S.rtReg); KV("Cargo/Função",S.rtCargo); KV("Órgão/Entidade",ORGAO);
 
   H("3. IDENTIFICAÇÃO DA UNIDADE HABITACIONAL");
   KV("Nome do responsável/família",S.famNome); KV("CPF",S.cpf); KV("Endereço completo",S.end); KV("Bairro/localidade",S.bairro);
@@ -939,10 +950,10 @@ function blocks(){
 
   H("5. DESCRIÇÃO DOS DANOS OBSERVADOS");
   OPTS("",DANOS.map(([v,l])=>[v==="outros"?`Outros: ${has("outros")&&S.danosOutro.trim()?trimDot(S.danosOutro):"____________"}`:l, has(v)]));
-  L("Descrição técnica detalhada:"); P(S.descDanos);
+  if((S.descDanos||"").trim()){ L("Descrição técnica detalhada:"); P(S.descDanos); }
 
   H("6. AVALIAÇÃO DE SEGURANÇA E HABITABILIDADE");
-  OPTS("",HAB.map(([v,l])=>[l,S.hab===v])); L("Avaliação técnica:"); P(S.avalTec);
+  OPTS("",HAB.map(([v,l])=>[l,S.hab===v])); if((S.avalTec||"").trim()){ L("Avaliação técnica:"); P(S.avalTec); }
 
   H("7. IMPACTOS HUMANOS E SOCIAIS");
   OPTS("",IMP.map(([v,l])=>[v==="outros"?`Outros: ${S.imp.includes("outros")&&S.impOutro.trim()?trimDot(S.impOutro):"____________"}`:l, S.imp.includes(v)]));
@@ -960,7 +971,7 @@ function blocks(){
 
   H("10. CONCLUSÃO TÉCNICA"); P(S.conclusao);
 
-  B.push({t:"sign", local:S.localData, nome:S.rtNome, cargo:S.rtProf||S.rtCargo, reg:S.rtReg, orgao:[S.rtOrgao, S.mun?`${S.mun}${S.uf?"/"+S.uf.toUpperCase():""}`:""].filter(Boolean).join(" · ")});
+  B.push({t:"sign", local:S.localData, nome:S.rtNome, cargo:prof()||S.rtCargo, reg:S.rtReg, orgao:[ORGAO, S.mun?`${S.mun}${S.uf?"/"+S.uf.toUpperCase():""}`:""].filter(Boolean).join(" · ")});
   return B;
 }
 const TITLE1="LAUDO DE ENGENHARIA PARA UNIDADES HABITACIONAIS DANIFICADAS OU DESTRUÍDAS", TITLE2="(Eventos Súbitos)";
@@ -1433,7 +1444,7 @@ function toast(msg,err){ const t=$("#toast"); t.textContent=msg; t.classList.tog
     const ph=await IDB.get("photos"); if(Array.isArray(ph)) PHOTOS=ph;
     if(!CUR) CUR=newId();
   }
-  if(!S.dtLaudo) S.dtLaudo=nowLocal();
+  { const it=INDEX.find(x=>x.id===CUR); if(!S.dtLaudo || (!S._dtManual && !(it && it.status==="emitido"))) S.dtLaudo=nowLocal(); }
   toUI(); renderPhotos(); bind(); refreshAuto(); syncVisibility(); updateStatus(); initDownloads();
   await saveCurrent(); renderList();
   try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist(); }catch(e){}
