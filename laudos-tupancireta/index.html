@@ -83,6 +83,8 @@ main{max-width:1000px;margin:0 auto;padding:18px 20px 28px}
 
 .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px 16px;margin-top:10px}
 .f{grid-column:span 6;display:flex;flex-direction:column;gap:4px}
+.pendass{background:#fff6ec;border:1px solid #f3c79c;border-left:5px solid var(--orange);border-radius:8px;padding:12px 16px;margin-bottom:16px}.pendass p{margin:0 0 10px;font-size:15px;line-height:1.45}.pendass .acts{display:flex;gap:10px;flex-wrap:wrap}
+ol.passos{padding-left:20px}ol.passos li{margin-bottom:6px}
 .opt{font-weight:400;color:var(--muted);font-size:13px}
 .fixo{display:flex;align-items:baseline;flex-wrap:wrap;gap:6px 12px;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:10px 12px}.fixo span{font-size:13.5px;color:var(--muted)}.fixo b{font-size:17px;color:var(--teal)}.fixo .cob{margin-left:auto}
 .f.s2{grid-column:span 2}.f.s3{grid-column:span 3}.f.s4{grid-column:span 4}.f.s6{grid-column:span 6}.f.s8{grid-column:span 8}.f.s12{grid-column:span 12}
@@ -204,6 +206,10 @@ footer button{background:none;border:0;padding:0;color:var(--muted);text-decorat
 </div></div>
 
 <main>
+  <section class="pendass" id="pendAss" hidden>
+    <p id="pendAssTxt"></p>
+    <div class="acts"><a class="btn org sm" href="https://assinador.iti.br/assinatura/index.xhtml" target="_blank" rel="noopener">Assinar no gov.br</a><label class="btn pri sm"><input type="file" accept="application/pdf,.pdf" multiple data-assin="" hidden>Enviar PDFs assinados</label></div>
+  </section>
   <section class="guide" aria-label="Orientações">
     <h2>Orientações ao responsável técnico</h2>
     <ol>
@@ -213,7 +219,7 @@ footer button{background:none;border:0;padding:0;color:var(--muted);text-decorat
       <li>Os laudos ficam salvos no aparelho e podem ser reabertos em <b>Meus laudos</b>. Ao fim de cada dia de vistoria, recomenda-se salvar uma <b>cópia de segurança</b> e guardá-la fora do aparelho, por WhatsApp, e-mail ou Google Drive.</li>
       <li>Após o primeiro acesso com internet, o site funciona também sem conexão. Para acesso rápido em campo, utilize a opção “Adicionar à tela inicial” do navegador.</li>
       <li>Cada laudo gerado é enviado automaticamente à coordenação, em PDF e em Word. Em <b>Meus laudos</b>, a situação indica “Enviado à coordenação” ou “Envio aguardando internet”, e os imóveis já vistoriados podem ser consultados no <a href="mapa.html">mapa dos imóveis vistoriados</a>.</li>
-      <li>Gere o laudo em PDF e <b>assine-o digitalmente pelo gov.br</b>, no Assinador do ITI (<a href="https://assinador.iti.br" target="_blank" rel="noopener">assinador.iti.br</a>), com conta gov.br de nível prata ou ouro. Somente o PDF assinado deve ser entregue à Defesa Civil.</li>
+      <li>Gere o laudo em PDF e toque em <b>Assinar no gov.br</b>, que abre o Assinador do ITI (conta gov.br nível prata ou ouro). Depois de assinar e baixar o arquivo, volte a este site e toque em <b>Enviar PDF assinado</b>: o laudo assinado segue automaticamente para a coordenação, e o site reconhece cada laudo pelo nome do arquivo, inclusive quando vários são enviados de uma vez.</li>
     </ol>
   </section>
   <div class="meta-line"><span id="saveState">Salvo neste aparelho</span><span id="bkState"></span><button type="button" id="btnList">Meus laudos (<span id="histCount">0</span>)</button><button type="button" id="btnNew2">Iniciar novo laudo</button><a href="mapa.html">Mapa dos imóveis vistoriados</a></div>
@@ -1232,8 +1238,8 @@ async function generate(kind, force=false){
     const ok=await saveFile(blob, `${base}.${kind}`);
     if(kind==="pdf") LAST_PDF={blob,name:`${base}.pdf`};
     const sendNote = (kind==="pdf" && ENVIO_ON) ? (navigator.onLine?"<p>Uma cópia do laudo, em PDF e em Word, está sendo enviada automaticamente à coordenação.</p>":"<p>Sem internet no momento: a cópia para a coordenação será enviada automaticamente quando o sinal voltar.</p>") : "";
-    if(ok){ await saveCurrent({status:"emitido",arquivo:`${base}.${kind}`,emitido:new Date().toISOString()});
-      if(kind==="pdf") modal(`<h3>Laudo gerado</h3><p>O arquivo <b>${esc(base)}.pdf</b> foi salvo. Para concluir a emissão, assine-o digitalmente pelo gov.br:</p><ol><li>Acesse <a href="https://assinador.iti.br" target="_blank" rel="noopener">assinador.iti.br</a> e entre com a conta gov.br (nível prata ou ouro).</li><li>Envie o PDF, posicione a assinatura sobre a linha do responsável técnico e confirme pelo aplicativo gov.br.</li><li>Baixe o arquivo assinado e entregue-o à Defesa Civil.</li></ol>${sendNote}<div class="acts"><button class="btn sec2" data-close>Fechar</button>${canShareFile(new File([blob],"x.pdf",{type:"application/pdf"}))?'<button class="btn sec2" id="mSharePdf">Enviar PDF</button>':""}<a class="btn org" href="https://assinador.iti.br" target="_blank" rel="noopener">Abrir o Assinador gov.br</a></div>`);
+    if(ok){ await saveCurrent({status:"emitido",arquivo:`${base}.${kind}`,base,emitido:new Date().toISOString()});
+      if(kind==="pdf") modal(`<h3>Laudo gerado: falta assinar</h3><p>O arquivo <b>${esc(base)}.pdf</b> foi salvo no aparelho. Para concluir:</p><ol class="passos"><li>Toque em <b>Assinar no gov.br</b>, entre com a conta gov.br (prata ou ouro), envie o PDF, posicione a assinatura sobre a linha do responsável técnico e confirme pelo aplicativo gov.br.</li><li>Baixe o arquivo assinado.</li><li>Volte a este site e toque em <b>Enviar PDF assinado</b>. O laudo assinado segue automaticamente para a coordenação.</li></ol>${sendNote}<div class="acts">${canShareFile(new File([blob],"x.pdf",{type:"application/pdf"}))?'<button class="btn sec2" id="mSharePdf">Salvar/enviar PDF</button>':""}<a class="btn org" href="${ASS_URL}" target="_blank" rel="noopener">Assinar no gov.br</a><label class="btn pri"><input type="file" accept="application/pdf,.pdf" data-assin="${CUR}" hidden>Enviar PDF assinado</label><button class="btn sec2" data-close>Fechar</button></div>`);
       if($("#mSharePdf")) $("#mSharePdf").onclick=sharePdf;
       enqueueSend(CUR,kind,blob,base);
       if(kind!=="pdf") toast("Laudo em Word gerado. Para a entrega, gere o PDF e assine pelo gov.br."); }
@@ -1249,7 +1255,8 @@ function newId(){ return "L"+Date.now().toString(36)+Math.random().toString(36).
 function hasContent(s,ph){ return !!((s.famNome||"").trim()||(s.end||"").trim()||(ph&&ph.length)||(s.danos||[]).length); }
 function summary(id,s,ph,prev){
   return {id, created:prev?.created||new Date().toISOString(), updated:new Date().toISOString(), status:prev?.status||"rascunho", arquivo:prev?.arquivo||"", emitido:prev?.emitido||"",
-    familia:s.famNome||"", endereco:s.end||"", bairro:s.bairro||"", hab:(HAB.find(x=>x[0]===s.hab)||["",""])[1], valor:s.valor||"", fotos:(ph||[]).length};
+    familia:s.famNome||"", endereco:s.end||"", bairro:s.bairro||"", hab:(HAB.find(x=>x[0]===s.hab)||["",""])[1], valor:s.valor||"", fotos:(ph||[]).length,
+    ...Object.fromEntries(["sync","syncEm","base","assinado","assEm","assArquivo","assSync"].filter(k=>prev&&prev[k]!==undefined).map(k=>[k,prev[k]]))};
 }
 let saveT=null;
 function persist(){ clearTimeout(saveT); saveT=setTimeout(saveCurrent,350); store(LS_DRAFT,S); }
@@ -1296,8 +1303,10 @@ function renderList(){
   else if(since){ el.innerHTML=`<b style="color:#9a4a10">${since} ${since>1?"laudos sem cópia de segurança":"laudo sem cópia de segurança"}</b>`; }
   else { el.textContent=`Cópia de segurança em ${new Date(bk.em).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}`; }
   const st={rascunho:"Em preenchimento",emitido:"PDF gerado"};
-  $("#histBody").innerHTML = L.length ? `<table><thead><tr><th>Família</th><th>Endereço</th><th>Situação</th><th>Atualizado</th><th></th></tr></thead><tbody>${L.map(r=>`<tr${r.id===CUR?' style="background:#f1f6f5"':""}><td>${esc(r.familia||"(sem identificação)")}${r.id===CUR?' <span class="hint">· em edição</span>':""}</td><td>${esc(r.endereco)}${r.bairro?" – "+esc(r.bairro):""}</td><td>${st[r.status]||r.status}${ENVIO_ON&&r.sync==="enviado"?'<br><span class="hint" style="color:var(--ok)">Enviado à coordenação</span>':""}${ENVIO_ON&&r.sync==="pendente"?'<br><span class="hint" style="color:#9a4a10">Envio aguardando internet</span>':""}</td><td>${esc(new Date(r.updated).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}))}</td><td style="white-space:nowrap">${r.id===CUR?"":`<button class="btn sec2 sm" data-open="${r.id}">Abrir</button> `}<button class="btn sec2 sm" data-del="${r.id}">Excluir</button></td></tr>`).join("")}</tbody></table>` : `<p class="empty">Nenhum laudo salvo ainda neste aparelho.</p>`;
+  const stx=r=>r.assinado?'<b style="color:var(--ok)">Assinado</b>':(st[r.status]||r.status)+(r.status==="emitido"?'<br><span class="hint" style="color:#9a4a10">Aguardando assinatura</span>':"");
+  $("#histBody").innerHTML = L.length ? `<table><thead><tr><th>Família</th><th>Endereço</th><th>Situação</th><th>Atualizado</th><th></th></tr></thead><tbody>${L.map(r=>`<tr${r.id===CUR?' style="background:#f1f6f5"':""}><td>${esc(r.familia||"(sem identificação)")}${r.id===CUR?' <span class="hint">· em edição</span>':""}</td><td>${esc(r.endereco)}${r.bairro?" – "+esc(r.bairro):""}</td><td>${stx(r)}${ENVIO_ON&&r.assSync==="enviado"?'<br><span class="hint" style="color:var(--ok)">Assinado enviado à coordenação</span>':""}${ENVIO_ON&&r.assSync==="pendente"?'<br><span class="hint" style="color:#9a4a10">Assinado aguardando internet</span>':""}${!r.assSync&&ENVIO_ON&&r.sync==="enviado"?'<br><span class="hint" style="color:var(--ok)">Enviado à coordenação</span>':""}${ENVIO_ON&&r.sync==="pendente"?'<br><span class="hint" style="color:#9a4a10">Envio aguardando internet</span>':""}</td><td>${esc(new Date(r.updated).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}))}</td><td style="white-space:nowrap">${r.status==="emitido"&&!r.assinado?`<label class="btn org sm"><input type="file" accept="application/pdf,.pdf" data-assin="${r.id}" hidden>Enviar assinado</label> `:""}${r.id===CUR?"":`<button class="btn sec2 sm" data-open="${r.id}">Abrir</button> `}<button class="btn sec2 sm" data-del="${r.id}">Excluir</button></td></tr>`).join("")}</tbody></table>` : `<p class="empty">Nenhum laudo salvo ainda neste aparelho.</p>`;
   $$("[data-open]").forEach(b=>b.onclick=()=>openLaudo(b.dataset.open));
+  renderPendAss();
   $$("[data-del]").forEach(b=>b.onclick=()=>askDelete(b.dataset.del));
 }
 
@@ -1407,20 +1416,80 @@ async function setSync(id,st,extra){
 }
 async function trySend(){
   if(!ENVIO_ON || SENDING || !navigator.onLine) return;
-  const pend=INDEX.filter(x=>x.sync==="pendente"); if(!pend.length) return;
+  const pend=INDEX.filter(x=>x.sync==="pendente"), pa=INDEX.filter(x=>x.assSync==="pendente");
+  if(!pend.length && !pa.length) return;
   SENDING=true;
+  const post=body=>fetch(ENVIO.url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({chave:ENVIO.chave,...body})}).then(r=>r.json());
   try{
     for(const it of pend){
       const q=await IDB.get("fila:"+it.id); if(!q){ await setSync(it.id,""); continue; }
       try{
-        const r=await fetch(ENVIO.url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({chave:ENVIO.chave,...q})});
-        const j=await r.json();
+        const j=await post(q);
         if(j.ok){ await IDB.del("fila:"+it.id); await setSync(it.id,"enviado",{syncEm:new Date().toISOString()}); toast(`Laudo de ${it.familia||"sem identificação"} enviado à coordenação.`); }
         else throw new Error(j.erro||"erro");
-      }catch(e){ break; }
+      }catch(e){ return; }
+    }
+    for(const it of pa){
+      const q=await IDB.get("ass:"+it.id); if(!q){ it.assSync=""; await IDB.set("index",INDEX); continue; }
+      try{
+        const r=await IDB.get("laudo:"+it.id);
+        const j=await post({id:it.id,assinado:q.b64,nomeAssinado:it.base?`${it.base}_assinado.pdf`:q.nome,meta:r?metaFor(r.S,r.PHOTOS):{}});
+        if(j.ok){ await IDB.del("ass:"+it.id); it.assSync="enviado"; await IDB.set("index",INDEX); renderList(); toast(`Laudo assinado de ${it.familia||"sem identificação"} enviado à coordenação.`); }
+        else throw new Error(j.erro||"erro");
+      }catch(e){ return; }
     }
   } finally { SENDING=false; }
 }
+
+/* ====================== Assinatura (gov.br) ====================== */
+const ASS_URL="https://assinador.iti.br/assinatura/index.xhtml";
+const keyNome=n=>String(n||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/\.pdf$/,"").replace(/[^a-z0-9]/g,"");
+function pdfAssinado(buf){ const s=new TextDecoder("latin1").decode(buf); return /\/ByteRange\s*\[/.test(s) && /\/Type\s*\/Sig\b|\/SubFilter\s*\/(adbe|ETSI)/.test(s); }
+function pendentesAss(){ return INDEX.filter(x=>x.status==="emitido" && !x.assinado); }
+function acharLaudo(nome){
+  const k=keyNome(nome); if(!k) return null;
+  const c=INDEX.filter(x=>x.base && k.startsWith(keyNome(x.base)));
+  return c.sort((p,q)=>keyNome(q.base).length-keyNome(p.base).length)[0]||null;
+}
+async function anexarAssinados(files,forcedId){
+  const ok=[], semAss=[], semLaudo=[];
+  for(const f of files){
+    if(!/\.pdf$/i.test(f.name) && f.type!=="application/pdf"){ semAss.push(f.name); continue; }
+    const buf=await f.arrayBuffer();
+    if(!pdfAssinado(buf)){ semAss.push(f.name); continue; }
+    const it= forcedId ? INDEX.find(x=>x.id===forcedId) : acharLaudo(f.name);
+    if(!it){ semLaudo.push([f,buf]); continue; }
+    await registrarAssinado(it,f.name,buf); ok.push(it);
+  }
+  renderList(); renderPendAss(); trySend();
+  let msg="";
+  if(ok.length) msg+=`<p><b>${ok.length} ${ok.length>1?"laudos assinados recebidos":"laudo assinado recebido"}</b>${ENVIO_ON?(navigator.onLine?" e em envio à coordenação.":"; o envio à coordenação ocorrerá quando o sinal retornar."):"."}</p><ul>${ok.map(x=>`<li>${esc(x.familia||"(sem identificação)")}</li>`).join("")}</ul>`;
+  if(semAss.length) msg+=`<p style="color:var(--danger)"><b>Sem assinatura digital:</b> ${semAss.map(esc).join(", ")}. Envie o arquivo baixado do Assinador gov.br após a assinatura.</p>`;
+  if(semLaudo.length){
+    const pend=pendentesAss();
+    if(pend.length){
+      const [f,buf]=semLaudo[0];
+      modal(`${msg}<h3>A qual laudo pertence este PDF?</h3><p><b>${esc(f.name)}</b></p><select id="mQual">${pend.map(x=>`<option value="${x.id}">${esc(x.familia||"(sem identificação)")} – ${esc(x.endereco||"")}</option>`).join("")}</select><div class="acts"><button class="btn sec2" data-close>Cancelar</button><button class="btn pri" id="mQualOk">Confirmar</button></div>`);
+      $("#mQualOk").onclick=async()=>{ const it=INDEX.find(x=>x.id===$("#mQual").value); await registrarAssinado(it,f.name,buf); closeModal(); renderList(); renderPendAss(); trySend(); toast(`Laudo assinado de ${it.familia||"sem identificação"} recebido.`);
+        if(semLaudo.length>1) anexarAssinados(semLaudo.slice(1).map(([g])=>g)); };
+      return;
+    }
+    msg+=`<p style="color:var(--danger)"><b>Não há laudo correspondente neste aparelho:</b> ${semLaudo.map(([f])=>esc(f.name)).join(", ")}.</p>`;
+  }
+  if(msg) modal(`<h3>PDF assinado</h3>${msg}<div class="acts"><button class="btn pri" data-close>OK</button></div>`);
+}
+async function registrarAssinado(it,nome,buf){
+  let b=""; const u=new Uint8Array(buf); for(let i=0;i<u.length;i+=0x8000) b+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000));
+  await IDB.set("ass:"+it.id,{id:it.id,nome,b64:btoa(b)});
+  Object.assign(it,{assinado:true,assEm:new Date().toISOString(),assArquivo:nome,assSync:ENVIO_ON?"pendente":""});
+  await IDB.set("index",INDEX);
+}
+function renderPendAss(){
+  const box=$("#pendAss"); if(!box) return; const p=pendentesAss();
+  box.hidden=!p.length; if(!p.length) return;
+  $("#pendAssTxt").innerHTML=`<b>${p.length} ${p.length>1?"laudos gerados aguardam":"laudo gerado aguarda"} o PDF assinado</b>: ${p.slice(0,4).map(x=>esc(x.familia||"(sem identificação)")).join("; ")}${p.length>4?"…":""}. Assine no gov.br e envie os arquivos assinados, um ou vários de uma vez: o site reconhece cada laudo pelo nome do arquivo.`;
+}
+document.addEventListener("change",e=>{ const el=e.target; if(el.matches&&el.matches("input[data-assin]") && el.files.length){ const id=el.dataset.assin||null; const fs=[...el.files]; el.value=""; closeModal(); anexarAssinados(fs,id); } });
 
 /* ====================== Modal e aviso ====================== */
 function modal(html){ $("#modalBox").innerHTML=html; $("#modal").classList.add("on"); $$("[data-close]",$("#modalBox")).forEach(b=>b.onclick=closeModal); }
