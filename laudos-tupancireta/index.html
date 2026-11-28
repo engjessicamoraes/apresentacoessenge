@@ -83,6 +83,20 @@ main{max-width:1000px;margin:0 auto;padding:18px 20px 28px}
 
 .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px 16px;margin-top:10px}
 .f{grid-column:span 6;display:flex;flex-direction:column;gap:4px}
+.curstate{background:#eef7f1;border:1px solid #b9dcc6;border-left:5px solid var(--ok,#1d6b45);border-radius:8px;padding:12px 16px;margin-bottom:16px}
+.curstate .tt,.assbox .tt{margin:0 0 6px;font-weight:700;color:var(--teal);font-size:15.5px}
+.curstate .acts{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+ul.stl{list-style:none;padding:0;margin:6px 0 4px}ul.stl li{display:flex;gap:9px;align-items:flex-start;font-size:15px;line-height:1.4;margin:5px 0}
+.si{flex:0 0 22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700}
+.si.ok{background:#1d6b45;color:#fff}.si.wt{background:#fff1dc}.si.no{background:#fff;border:2px solid #c9862e;color:#c9862e}
+h3.okh{color:#1d6b45;margin-bottom:2px}p.sub{margin:0 0 8px;color:var(--muted);font-size:14px}
+.assbox{background:#fff8ef;border:1px solid #f3c79c;border-radius:8px;padding:12px 14px;margin:12px 0}
+.btn.big{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:13px 16px;font-size:16px;margin:6px 0 4px}
+.btn.big .n{display:inline-flex;width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.25);align-items:center;justify-content:center;font-weight:700}
+.pend.warn b{color:#9a4a10}
+.hint2{font-size:13.5px;color:var(--muted);margin:2px 0 8px;line-height:1.4}
+.acts.col{display:flex;flex-direction:column;gap:6px;align-items:stretch}
+.btn.link{background:none;border:0;color:var(--teal);text-decoration:underline;padding:6px;font-size:14.5px}
 .pendass{background:#fff6ec;border:1px solid #f3c79c;border-left:5px solid var(--orange);border-radius:8px;padding:12px 16px;margin-bottom:16px}.pendass p{margin:0 0 10px;font-size:15px;line-height:1.45}.pendass .acts{display:flex;gap:10px;flex-wrap:wrap}
 ol.passos{padding-left:20px}ol.passos li{margin-bottom:6px}
 .opt{font-weight:400;color:var(--muted);font-size:13px}
@@ -206,6 +220,7 @@ footer button{background:none;border:0;padding:0;color:var(--muted);text-decorat
 </div></div>
 
 <main>
+  <section class="curstate" id="curState" hidden></section>
   <section class="pendass" id="pendAss" hidden>
     <p id="pendAssTxt"></p>
     <div class="acts"><a class="btn org sm" href="https://assinador.iti.br/assinatura/index.xhtml" target="_blank" rel="noopener">Assinar no gov.br</a><label class="btn pri sm"><input type="file" accept="application/pdf,.pdf" multiple data-assin="" hidden>Enviar PDFs assinados</label></div>
@@ -299,6 +314,9 @@ footer button{background:none;border:0;padding:0;color:var(--muted);text-decorat
       <div class="grid">
         <div class="q"><span class="l">Danos constatados <span class="req">*</span></span><div class="checks" data-check="danos"></div>
           <input type="text" class="other" id="danosOutro" data-k="danosOutro" placeholder="Outros danos" hidden></div>
+      </div>
+      <div class="grid">
+        <div class="q"><span class="l">Entrada de energia elétrica (poste e padrão de entrada) <span class="req">*</span></span><div class="checks" data-radio="energia"></div></div>
       </div>
       <div class="grid" id="cobQs" hidden>
         <div class="f s4"><label class="l" for="cobTipo">Telhamento</label><select id="cobTipo" data-k="cobTipo"><option value="">Selecione</option><option value="telhas cerâmicas">Telhas cerâmicas</option><option value="telhas de fibrocimento">Telhas de fibrocimento</option><option value="telhas metálicas">Telhas metálicas</option><option value="telhas de concreto">Telhas de concreto</option><option value="telhas asfálticas ou de fibra vegetal">Telhas asfálticas ou de fibra vegetal</option></select></div>
@@ -430,6 +448,7 @@ const EVENTS = [
   {k:"outro", nome:"", full:"", cob:""}
 ];
 const TIPOS = [["alvenaria","Alvenaria"],["madeira","Madeira"],["mista","Mista"],["outro","Outro"]];
+const ENERGIA = [["intacta","Sem danos aparentes"],["recuperavel","Danificada – passível de recuperação"],["perda","Perda total – necessita substituição do poste e do padrão de entrada"],["naoaplica","Não se aplica (imóvel sem entrada de energia própria)"]];
 const DANOS = [
   ["destelhamento","Destelhamento"],["infiltracoes","Infiltrações"],["fissuras","Fissuras"],["trincas","Trincas"],
   ["recalque","Recalque estrutural"],["alagamento","Alagamento interno"],["colapsoParcial","Colapso parcial"],["colapsoTotal","Colapso total"],
@@ -475,7 +494,7 @@ const DEFAULTS = {
   descEvento:"", rtNome:"", rtProf:"", rtProfOutro:"", rtReg:"", rtTel:"", rtCargo:"Profissional voluntário(a)", rtOrgao:"SENGE-RS – Programa SENGE Solidário",
   famNome:"", cpf:"", end:"", bairro:"", coord:"", area:"", tipo:"", tipoOutro:"", moradores:"",
   danos:[], danosOutro:"", cobTipo:"", cobPct:"", madeir:"", obsDanos:"", descDanos:"",
-  hab:"", avalTec:"", imp:[], impOutro:"", impDesc:"", med:[], medOutro:"", medDesc:"",
+  energia:"", hab:"", avalTec:"", imp:[], impOutro:"", impDesc:"", med:[], medOutro:"", medDesc:"",
   areaDano:"", custoUnit:"", outrosValor:"", valor:"", metod:"", conclusao:"", localData:"",
   _auto:{}
 };
@@ -649,6 +668,8 @@ function genConclusao(){
     if(has("muro")) m.push("demolição dos remanescentes e reconstrução do muro");
     if(has("alagamento")) m.push("limpeza e desinfecção dos ambientes");
   }
+  if(S.energia==="perda") m.push("substituição do poste e do padrão de entrada de energia elétrica, com nova ligação pela concessionária");
+  if(S.energia==="recuperavel") m.push("recuperação do padrão de entrada de energia elétrica (poste, caixa de medição e ramal de entrada) por profissional habilitado");
   if(m.length) P.push(`Medidas necessárias: ${m.join("; ")}.`);
   return P.join("\n\n");
 }
@@ -665,6 +686,7 @@ function buildOpts(){
   mk('[data-radio="area"]',AREA,"radio","area");
   mk('[data-radio="tipo"]',TIPOS,"radio","tipo");
   mk('[data-check="danos"]',DANOS,"checkbox","danos");
+  mk('[data-radio="energia"]',ENERGIA,"radio","energia");
   mk('[data-radio="hab"]',HAB,"radio","hab");
   mk('[data-check="imp"]',IMP,"checkbox","imp");
   mk('[data-check="med"]',MED,"checkbox","med");
@@ -714,7 +736,7 @@ const REQ={
   B:[["rtNome","Nome do responsável técnico"],["rtProf","Profissão"],["rtReg","Registro de classe"],["rtTel","Telefone para contato"]],
   C:[["famNome","Nome do responsável/família"],["end","Endereço"],["bairro","Bairro/localidade"],["area","Localização (urbana ou rural)"],["tipo","Tipo construtivo"]],
   J:[["dtOcorr","Data da ocorrência"]],
-  D:[["danos","Danos constatados"]],
+  D:[["danos","Danos constatados"],["energia","Entrada de energia elétrica (poste/padrão)"]],
   F:[["hab","Condição de habitabilidade"]],
   G:[],
   K:[],
@@ -734,7 +756,12 @@ function updateStatus(){
   }
   const b=$("#btnPend");
   b.classList.toggle("ok",tot===0);
-  $("#pendTxt").textContent= tot ? `${tot} ${tot>1?"itens pendentes":"item pendente"}` : "Laudo completo";
+  const it=INDEX.find(x=>x.id===CUR);
+  if(!tot && it && it.status==="emitido"){
+    const env=!ENVIO_ON?"":it.sync==="enviado"?" · enviado ✓":it.sync==="pendente"?" · envio aguardando":"";
+    $("#pendTxt").textContent= it.assinado ? `Laudo assinado${it.assSync==="enviado"?" e enviado ✓":" · envio aguardando"}` : `Laudo gerado${env} · falta assinar`;
+    b.classList.toggle("ok",!!it.assinado); b.classList.toggle("warn",!it.assinado);
+  } else { b.classList.remove("warn"); $("#pendTxt").textContent= tot ? `${tot} ${tot>1?"itens pendentes":"item pendente"}` : "Laudo completo"; }
 }
 
 function changed(){ refreshAuto(); syncVisibility(); updateStatus(); persist(); }
@@ -766,7 +793,7 @@ function bind(){
   $("#inFiles").addEventListener("change",e=>{ addFiles(e.target.files); e.target.value=""; });
   $("#btnPdf").addEventListener("click",()=>generate("pdf"));
   $("#btnDocx").addEventListener("click",()=>generate("docx"));
-  $("#btnPend").addEventListener("click",showPend);
+  $("#btnPend").addEventListener("click",()=>{ const it=INDEX.find(x=>x.id===CUR); if(it&&it.status==="emitido"&&!$("#curState").hidden){ $("#curState").scrollIntoView({behavior:"smooth",block:"start"}); } else showPend(); });
   $("#btnNew2").addEventListener("click",askNew);
   $("#btnCsv").addEventListener("click",exportCsv);
   $("#btnBackup").addEventListener("click",exportBackup);
@@ -959,6 +986,7 @@ function blocks(){
 
   H("5. DESCRIÇÃO DOS DANOS OBSERVADOS");
   OPTS("",DANOS.map(([v,l])=>[v==="outros"?`Outros: ${has("outros")&&S.danosOutro.trim()?trimDot(S.danosOutro):"____________"}`:l, has(v)]));
+  L("Entrada de energia elétrica (poste e padrão de entrada):"); OPTS("",ENERGIA.map(([v,l])=>[l,S.energia===v]));
   if((S.descDanos||"").trim()){ L("Descrição técnica detalhada:"); P(S.descDanos); }
 
   H("6. AVALIAÇÃO DE SEGURANÇA E HABITABILIDADE");
@@ -1242,10 +1270,10 @@ async function generate(kind, force=false){
     if(kind==="pdf") LAST_PDF={blob,name:`${base}.pdf`};
     const sendNote = (kind==="pdf" && ENVIO_ON) ? (navigator.onLine?"<p>Uma cópia do laudo, em PDF e em Word, está sendo enviada automaticamente à coordenação.</p>":"<p>Sem internet no momento: a cópia para a coordenação será enviada automaticamente quando o sinal voltar.</p>") : "";
     if(ok){ await saveCurrent({status:"emitido",arquivo:`${base}.${kind}`,base,emitido:new Date().toISOString()});
-      if(kind==="pdf") modal(`<h3>Laudo gerado: falta assinar</h3><p>O arquivo <b>${esc(base)}.pdf</b> foi salvo no aparelho. Para concluir:</p><ol class="passos"><li>Toque em <b>Assinar no gov.br</b>, entre com a conta gov.br (prata ou ouro), envie o PDF, posicione a assinatura sobre a linha do responsável técnico e confirme pelo aplicativo gov.br.</li><li>Baixe o arquivo assinado.</li><li>Volte a este site e toque em <b>Enviar PDF assinado</b>. O laudo assinado segue automaticamente para a coordenação.</li></ol>${sendNote}<div class="acts">${canShareFile(new File([blob],"x.pdf",{type:"application/pdf"}))?'<button class="btn sec2" id="mSharePdf">Salvar/enviar PDF</button>':""}<a class="btn org" href="${ASS_URL}" target="_blank" rel="noopener">Assinar no gov.br</a><label class="btn pri"><input type="file" accept="application/pdf,.pdf" data-assin="${CUR}" hidden>Enviar PDF assinado</label><button class="btn sec2" data-close>Fechar</button></div>`);
+      telaConcluido(kind,base);
       if($("#mSharePdf")) $("#mSharePdf").onclick=sharePdf;
       enqueueSend(CUR,kind,blob,base);
-      if(kind!=="pdf") toast("Laudo em Word gerado. Para a entrega, gere o PDF e assine pelo gov.br."); }
+    }
   }catch(e){
     console.error(e); toast(e.message==="lib"?"Não foi possível carregar o gerador de arquivos. Verifique a conexão com a internet.":"Erro ao gerar o laudo. Tente novamente.",true);
   }finally{ btn.disabled=false; btn.innerHTML=old; }
@@ -1282,7 +1310,7 @@ async function openLaudo(id){
   const r=await IDB.get("laudo:"+id); if(!r){ toast("Laudo não encontrado neste aparelho.",true); return; }
   CUR=id; store(LS_CUR,CUR);
   S=Object.assign(structuredClone(DEFAULTS),r.S); S._auto=r.S._auto||{}; PHOTOS=r.PHOTOS||[];
-  toUI(); renderPhotos(); changed(); afterLoad();
+  toUI(); renderPhotos(); changed(); afterLoad(); atualizaSituacao();
   $("#secC").open=true; window.scrollTo({top:0,behavior:"smooth"});
   toast(`Laudo aberto: ${S.famNome||"sem identificação"}.`);
 }
@@ -1309,7 +1337,7 @@ function renderList(){
   const stx=r=>r.assinado?'<b style="color:var(--ok)">Assinado</b>':(st[r.status]||r.status)+(r.status==="emitido"?'<br><span class="hint" style="color:#9a4a10">Aguardando assinatura</span>':"");
   $("#histBody").innerHTML = L.length ? `<table><thead><tr><th>Família</th><th>Endereço</th><th>Situação</th><th>Atualizado</th><th></th></tr></thead><tbody>${L.map(r=>`<tr${r.id===CUR?' style="background:#f1f6f5"':""}><td>${esc(r.familia||"(sem identificação)")}${r.id===CUR?' <span class="hint">· em edição</span>':""}</td><td>${esc(r.endereco)}${r.bairro?" – "+esc(r.bairro):""}</td><td>${stx(r)}${ENVIO_ON&&r.assSync==="enviado"?'<br><span class="hint" style="color:var(--ok)">Assinado enviado à coordenação</span>':""}${ENVIO_ON&&r.assSync==="pendente"?'<br><span class="hint" style="color:#9a4a10">Assinado aguardando internet</span>':""}${!r.assSync&&ENVIO_ON&&r.sync==="enviado"?'<br><span class="hint" style="color:var(--ok)">Enviado à coordenação</span>':""}${ENVIO_ON&&r.sync==="pendente"?'<br><span class="hint" style="color:#9a4a10">Envio aguardando internet</span>':""}</td><td>${esc(new Date(r.updated).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}))}</td><td style="white-space:nowrap">${r.status==="emitido"&&!r.assinado?`<label class="btn org sm"><input type="file" accept="application/pdf,.pdf" data-assin="${r.id}" hidden>Enviar assinado</label> `:""}${r.id===CUR?"":`<button class="btn sec2 sm" data-open="${r.id}">Abrir</button> `}<button class="btn sec2 sm" data-del="${r.id}">Excluir</button></td></tr>`).join("")}</tbody></table>` : `<p class="empty">Nenhum laudo salvo ainda neste aparelho.</p>`;
   $$("[data-open]").forEach(b=>b.onclick=()=>openLaudo(b.dataset.open));
-  renderPendAss();
+  renderPendAss(); atualizaSituacao();
   $$("[data-del]").forEach(b=>b.onclick=()=>askDelete(b.dataset.del));
 }
 
@@ -1364,7 +1392,7 @@ async function exportCsv(){
   const rows=[];
   for(const it of INDEX){ const r=await IDB.get("laudo:"+it.id); if(!r) continue; const s=r.S;
     rows.push({em:it.updated,familia:s.famNome,cpf:s.cpf,endereco:s.end,bairro:s.bairro,coord:s.coord,mapa:mapsUrl(s.coord),area:s.area,tipo:(TIPOS.find(t=>t[0]===s.tipo)||["",""])[1],moradores:s.moradores,
-      danos:(s.danos||[]).map(k=>(DANOS.find(d=>d[0]===k)||["",k])[1]).join("; "),hab:(HAB.find(x=>x[0]===s.hab)||["",""])[1],valor:s.valor,rt:s.rtNome,registro:s.rtReg,tel:s.rtTel,fotos:(r.PHOTOS||[]).length,situacao:it.status==="emitido"?"PDF gerado":"Em preenchimento"}); }
+      danos:(s.danos||[]).map(k=>(DANOS.find(d=>d[0]===k)||["",k])[1]).join("; "),hab:(HAB.find(x=>x[0]===s.hab)||["",""])[1],energia:({intacta:"Sem danos",recuperavel:"Passível de recuperação",perda:"Perda total – substituir poste/padrão",naoaplica:"Não se aplica"})[s.energia]||"",valor:s.valor,rt:s.rtNome,registro:s.rtReg,tel:s.rtTel,fotos:(r.PHOTOS||[]).length,situacao:it.status==="emitido"?"PDF gerado":"Em preenchimento"}); }
   for(const h of load(LS_HIST,[])) if(!rows.some(r=>(r.familia+"|"+r.endereco).toLowerCase()===h.key)) rows.push({...h,situacao:"PDF gerado"});
   if(!rows.length){ toast("Ainda não há laudos."); return; }
   const cols=[["em","Atualizado em"],["familia","Responsável/família"],["cpf","CPF"],["endereco","Endereço"],["bairro","Bairro/localidade"],["coord","Coordenadas"],["mapa","Mapa"],["area","Área"],["tipo","Tipo construtivo"],["moradores","Moradores"],["danos","Danos"],["hab","Habitabilidade"],["rt","Responsável técnico"],["registro","Registro"],["fotos","Nº de fotos"],["situacao","Situação"]];
@@ -1385,7 +1413,7 @@ async function newLaudo(silent){
   const keepAuto={descEvento:S._auto.descEvento};
   S=structuredClone(DEFAULTS); Object.assign(S,keep); S._auto=keepAuto; S.dtLaudo=nowLocal();
   PHOTOS=[]; CUR=newId(); store(LS_CUR,CUR);
-  toUI(); renderPhotos(); changed(); afterLoad(); renderList();
+  toUI(); renderPhotos(); changed(); afterLoad(); renderList(); atualizaSituacao();
   if(!silent){ $("#secC").open=true; $("#secC").scrollIntoView({behavior:"smooth",block:"start"}); toast("Novo laudo iniciado."); }
 }
 
@@ -1427,6 +1455,7 @@ async function trySend(){
     for(const it of pend){
       const q=await IDB.get("fila:"+it.id); if(!q){ await setSync(it.id,""); continue; }
       try{
+        ENVIANDO=it.id; atualizaSituacao();
         const j=await post(q);
         if(j.ok){ await IDB.del("fila:"+it.id); await setSync(it.id,"enviado",{syncEm:new Date().toISOString()}); toast(`Laudo de ${it.familia||"sem identificação"} enviado à coordenação.`); }
         else throw new Error(j.erro||"erro");
@@ -1435,13 +1464,63 @@ async function trySend(){
     for(const it of pa){
       const q=await IDB.get("ass:"+it.id); if(!q){ it.assSync=""; await IDB.set("index",INDEX); continue; }
       try{
+        ENVIANDO=it.id+":ass"; atualizaSituacao();
         const r=await IDB.get("laudo:"+it.id);
         const j=await post({id:it.id,assinado:q.b64,nomeAssinado:it.base?`${it.base}_assinado.pdf`:q.nome,meta:r?metaFor(r.S,r.PHOTOS):{}});
         if(j.ok){ await IDB.del("ass:"+it.id); it.assSync="enviado"; await IDB.set("index",INDEX); renderList(); toast(`Laudo assinado de ${it.familia||"sem identificação"} enviado à coordenação.`); }
         else throw new Error(j.erro||"erro");
       }catch(e){ return; }
     }
-  } finally { SENDING=false; }
+  } finally { SENDING=false; ENVIANDO=null; atualizaSituacao(); }
+}
+
+/* ====================== Situação do laudo e conclusão ====================== */
+let ENVIANDO=null;
+const hhmm=iso=>iso?new Date(iso).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}):"";
+function linhasStatus(it){
+  if(!it) return "";
+  const ok='<span class="si ok">✓</span>', wt='<span class="si wt">⏳</span>', no='<span class="si no">○</span>';
+  let env;
+  if(!ENVIO_ON) env="";
+  else if(ENVIANDO===it.id && it.sync==="pendente") env=`<li>${wt}<span><b>Enviando à coordenação…</b> mantenha o site aberto.</span></li>`;
+  else if(it.sync==="pendente") env=`<li>${wt}<span><b>Envio aguardando internet.</b> Será feito automaticamente quando o sinal voltar, com o site aberto.</span></li>`;
+  else if(it.sync==="enviado") env=`<li>${ok}<span><b>Recebido pela coordenação</b> (Google Drive)${it.syncEm?" às "+hhmm(it.syncEm):""}.</span></li>`;
+  else env="";
+  let ass;
+  if(it.assinado && it.assSync==="enviado") ass=`<li>${ok}<span><b>PDF assinado recebido pela coordenação.</b> Laudo finalizado.</span></li>`;
+  else if(it.assinado) ass=`<li>${wt}<span><b>PDF assinado ${ENVIANDO===it.id+":ass"?"sendo enviado…":"aguardando internet para envio."}</b></span></li>`;
+  else ass=`<li>${no}<span><b>Falta enviar o PDF assinado</b> pelo gov.br.</span></li>`;
+  return `<ul class="stl"><li>${ok}<span><b>Laudo gerado e salvo neste aparelho.</b></span></li>${env}${ass}</ul>`;
+}
+function blocoAssinar(id){
+  return `<div class="assbox"><p class="tt">Para finalizar, assine pelo gov.br:</p>
+    <a class="btn org big" href="${ASS_URL}" target="_blank" rel="noopener"><span class="n">1</span> Assinar no gov.br</a>
+    <p class="hint2">No Assinador, entre com a conta gov.br, envie o PDF do laudo (pasta <b>Downloads</b> do aparelho), posicione a assinatura sobre a linha do responsável técnico, confirme e toque em <b>Baixar</b>.</p>
+    <label class="btn pri big"><input type="file" accept="application/pdf,.pdf" data-assin="${id}" hidden><span class="n">2</span> Enviar PDF assinado</label>
+    <p class="hint2">Escolha o arquivo assinado que acabou de baixar (normalmente termina em <b>_assinado.pdf</b>, na pasta Downloads).</p></div>`;
+}
+function telaConcluido(kind,base){
+  const it=INDEX.find(x=>x.id===CUR);
+  modal(`<div id="mConc" data-id="${CUR}"><h3 class="okh">✓ Laudo concluído</h3><p class="sub">${esc(it?.familia||"")}${it?.endereco?" · "+esc(it.endereco):""}</p>
+    <div id="mStatus">${linhasStatus(it)}</div>
+    ${it&&!it.assinado?blocoAssinar(CUR):""}
+    <div class="acts col"><button class="btn sec2 big" id="mNovo">Iniciar laudo da próxima casa</button>
+    <button class="btn link" data-close>Continuar editando este laudo</button>
+    ${kind==="pdf"&&canShareFile(new File([LAST_PDF.blob],"x.pdf",{type:"application/pdf"}))?'<button class="btn link" id="mSharePdf">Salvar ou compartilhar o PDF</button>':""}</div></div>`);
+  $("#mNovo").onclick=async()=>{ closeModal(); await newLaudo(true); window.scrollTo({top:0,behavior:"smooth"}); toast("Novo laudo iniciado. Os dados do evento e do responsável foram mantidos."); };
+  if($("#mSharePdf")) $("#mSharePdf").onclick=sharePdf;
+}
+function atualizaSituacao(){
+  try{ updateStatus(); }catch(e){}
+  const m=$("#mConc"); if(m){ const it=INDEX.find(x=>x.id===m.dataset.id); $("#mStatus").innerHTML=linhasStatus(it); }
+  const box=$("#curState"); if(!box) return;
+  const it=INDEX.find(x=>x.id===CUR);
+  if(!it || it.status!=="emitido"){ box.hidden=true; return; }
+  box.hidden=false;
+  box.innerHTML=`<p class="tt">Este laudo já foi gerado${it.emitido?" em "+new Date(it.emitido).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):""}.</p>${linhasStatus(it)}
+    <div class="acts">${!it.assinado?`<label class="btn pri sm"><input type="file" accept="application/pdf,.pdf" data-assin="${it.id}" hidden>Enviar PDF assinado</label><a class="btn org sm" href="${ASS_URL}" target="_blank" rel="noopener">Assinar no gov.br</a>`:""}<button class="btn sec2 sm" type="button" id="curNovo">Iniciar laudo da próxima casa</button></div>
+    <p class="hint2">Alterações neste laudo exigem gerar o PDF novamente.</p>`;
+  $("#curNovo").onclick=async()=>{ await newLaudo(true); window.scrollTo({top:0,behavior:"smooth"}); toast("Novo laudo iniciado. Os dados do evento e do responsável foram mantidos."); };
 }
 
 /* ====================== Assinatura (gov.br) ====================== */
@@ -1466,7 +1545,14 @@ async function anexarAssinados(files,forcedId){
   }
   renderList(); renderPendAss(); trySend();
   let msg="";
-  if(ok.length) msg+=`<p><b>${ok.length} ${ok.length>1?"laudos assinados recebidos":"laudo assinado recebido"}</b>${ENVIO_ON?(navigator.onLine?" e em envio à coordenação.":"; o envio à coordenação ocorrerá quando o sinal retornar."):"."}</p><ul>${ok.map(x=>`<li>${esc(x.familia||"(sem identificação)")}</li>`).join("")}</ul>`;
+  if(ok.length===1 && !semAss.length && !semLaudo.length){
+    const it=ok[0];
+    modal(`<div id="mConc" data-id="${it.id}"><h3 class="okh">✓ PDF assinado recebido</h3><p class="sub">${esc(it.familia||"")}${it.endereco?" · "+esc(it.endereco):""}</p><div id="mStatus">${linhasStatus(it)}</div>
+      <div class="acts col"><button class="btn pri big" id="mNovo2">Iniciar laudo da próxima casa</button><button class="btn link" data-close>Fechar</button></div></div>`);
+    $("#mNovo2").onclick=async()=>{ closeModal(); if(it.id===CUR) await newLaudo(true); window.scrollTo({top:0,behavior:"smooth"}); };
+    return;
+  }
+  if(ok.length) msg+=`<p><b>✓ ${ok.length} ${ok.length>1?"laudos assinados recebidos":"laudo assinado recebido"}</b>${ENVIO_ON?(navigator.onLine?" e em envio à coordenação. Acompanhe a situação em Meus laudos.":"; o envio à coordenação ocorrerá quando o sinal retornar."):"."}</p><ul>${ok.map(x=>`<li>${esc(x.familia||"(sem identificação)")}</li>`).join("")}</ul>`;
   if(semAss.length) msg+=`<p style="color:var(--danger)"><b>Sem assinatura digital:</b> ${semAss.map(esc).join(", ")}. Envie o arquivo baixado do Assinador gov.br após a assinatura.</p>`;
   if(semLaudo.length){
     const pend=pendentesAss();
@@ -1525,6 +1611,8 @@ function toast(msg,err){ const t=$("#toast"); t.textContent=msg; t.classList.tog
   window.addEventListener("online",net); window.addEventListener("offline",net); net();
   afterLoad(); $("#geoStatus").hidden=true;
   if("serviceWorker" in navigator && (location.protocol==="https:"||location.hostname==="localhost")){ navigator.serviceWorker.register("sw.js").catch(()=>{}); }
+  { const it=INDEX.find(x=>x.id===CUR); if(it && it.assinado && it.assSync!=="pendente") await newLaudo(true); }
+  atualizaSituacao();
   if(S.rtNome && S.rtReg){ $("#secA").open=false; $("#secB").open=false; $("#secJ").open=false; }
   document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="hidden") saveCurrent(); });
   window.addEventListener("pagehide",()=>{ store(LS_DRAFT,S); saveCurrent(); });
