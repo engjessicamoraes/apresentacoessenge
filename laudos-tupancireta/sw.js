@@ -1,5 +1,5 @@
 /* Laudos UH – funcionamento sem internet */
-const VERSION = "laudos-uh-v24";
+const VERSION = "laudos-uh-v25";
 const CORE = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png",
   "./lib/jspdf.umd.min.js", "./lib/docx.iife.js", "./lib/exifr-lite.umd.js", "./lib/leaflet.min.js", "./lib/leaflet.min.css",
   "./lib/images/marker-icon.png", "./lib/images/marker-icon-2x.png", "./lib/images/marker-shadow.png"];
@@ -16,7 +16,7 @@ self.addEventListener("fetch", e => {
   const req = e.request; if (req.method !== "GET") return;
   const url = new URL(req.url);
   // página: tenta a versão mais nova; sem sinal, usa a guardada
-  if (req.mode === "navigate" && /mapa\.html$/.test(url.pathname)) { e.respondWith(fetch(req).catch(() => caches.match(req))); return; }
+  if (req.mode === "navigate" && /(mapa|postes)\.html$/.test(url.pathname)) { e.respondWith(fetch(req).catch(() => caches.match(req))); return; }
   if (req.mode === "navigate") {
     e.respondWith(timeout(5000, fetch(req)).then(r => { const c = r.clone(); caches.open(VERSION).then(ca => ca.put("./index.html", c)); return r; })
       .catch(() => caches.match("./index.html")));
