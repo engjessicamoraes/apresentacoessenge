@@ -121,7 +121,7 @@ button.lnk{background:none;border:0;padding:0;font:inherit;color:var(--teal);tex
     <p class="sub">Imóveis vistoriados cuja entrada de energia elétrica (poste e padrão de entrada) precisa ser substituída ou recuperada.</p>
     <div class="tabs" id="ptabs"><button data-f="perda" class="on">Perda total – substituir poste/padrão</button><button data-f="rec">Passível de recuperação</button><button data-f="todos">Todos</button></div>
     <div id="ptab"><div class="state">Carregando…</div></div>
-    <div class="tools"><button class="btn" id="pcsv">Baixar planilha (CSV)</button><button class="btn" id="pprint">Imprimir relação</button></div>
+    <div class="tools"><button class="btn" id="pprint">Imprimir relação</button></div>
     <p class="note">Situação conforme avaliada pelo responsável técnico na vistoria. A relação atualiza automaticamente à medida que novos laudos são enviados.</p>
   </div>
   <div class="card">
@@ -188,14 +188,7 @@ function ptable() {
     L.circleMarker(c, { radius: 13, color: "#6b4fa0", weight: 3, fill: false }).addTo(map).bindPopup(`<b>${esc(x.endereco)}</b><br>${esc(x.energia)}`).openPopup();
   });
 }
-function pcsv() {
-  const rows = [["Endereço","Bairro/localidade","Entrada de energia","Habitabilidade","Data do laudo","Coordenadas"]].concat(plista().map(x => [x.endereco, x.bairro, x.energia, x.hab, x.data, x.coord]));
-  const txt = "\ufeff" + rows.map(r => r.map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(";")).join("\r\n");
-  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([txt], { type: "text/csv;charset=utf-8" }));
-  a.download = `Relacao_postes_Tupancireta_${new Date().toISOString().slice(0, 10)}.csv`; a.click();
-}
 document.getElementById("ptabs").addEventListener("click", e => { const b = e.target.closest("button"); if (b) setF(b.dataset.f); });
-document.getElementById("pcsv").onclick = pcsv;
 document.getElementById("pprint").onclick = () => { document.body.classList.add("pp"); window.print(); setTimeout(() => document.body.classList.remove("pp"), 500); };
 
 function stats(d) {
