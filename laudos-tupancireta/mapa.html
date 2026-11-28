@@ -70,6 +70,19 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 .leaflet-popup-content{font-family:"Source Sans 3",system-ui,sans-serif;font-size:14.5px;line-height:1.4;margin:10px 14px}
 .leaflet-popup-content b{color:var(--teal)}
 @media (max-width:640px){.titlebar h1{font-size:18px}main{padding:14px 12px 30px}.card{padding:14px 12px}#map{height:56vh}.stat b{font-size:22px}}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}
+.tabs button{border:1px solid var(--line);background:#fff;border-radius:20px;padding:7px 14px;font:600 14px "Source Sans 3",sans-serif;color:var(--muted);cursor:pointer}
+.tabs button.on{background:var(--teal);border-color:var(--teal);color:#fff}
+.tag{display:inline-block;font-size:12.5px;font-weight:700;border-radius:4px;padding:2px 7px;white-space:nowrap}
+.tag.perda{background:#f3e8ff;color:#5b2d91}.tag.rec{background:#fff3dc;color:#8a5300}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border-radius:6px;padding:9px 15px;font:600 15px "Source Sans 3",sans-serif;cursor:pointer;background:#fff;color:var(--teal);border:1px solid var(--teal)}
+.tools{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.sub{font-size:14.5px;color:var(--muted);margin:-4px 0 12px}
+.stat.go{cursor:pointer}
+button.lnk{background:none;border:0;padding:0;font:inherit;color:var(--teal);text-decoration:underline;cursor:pointer}
+#postes{scroll-margin-top:12px}
+@media (max-width:640px){ table.rel thead{display:none} table.rel tr{display:block;border:1px solid var(--line-2);border-radius:6px;padding:8px 10px;margin-bottom:10px} table.rel td{display:block;border:0;padding:2px 0} table.rel td.n{text-align:left;color:var(--muted);font-size:13px} }
+@media print{ .brandbar,.tabs,.tools,.titlebar .acts{display:none!important} body{background:#fff} .card{border:0;padding:0} body.pp main>.card:not(#postes){display:none} }
 </style>
 </head>
 <body>
@@ -95,13 +108,21 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
 </div></div>
 <div class="titlebar"><div class="in">
   <div><h1>Mapa dos imóveis vistoriados</h1><p>Tupanciretã/RS · Laudos de unidades habitacionais · <span id="upd">Carregando…</span></p></div>
-  <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="back" href="postes.html">Ver relação de postes</a><a class="back" href="./">Preencher um laudo</a></div>
+  <div class="acts" style="display:flex;gap:8px;flex-wrap:wrap"><a class="back" href="#postes">Relação de postes</a><a class="back" href="./">Preencher um laudo</a></div>
 </div></div>
 <main>
   <div class="card"><div class="stats" id="stats"></div></div>
   <div class="card">
     <div id="map"></div>
     <p class="note">Cada ponto representa um imóvel com laudo enviado à coordenação, na cor da avaliação de habitabilidade. Toque nos indicadores acima para exibir ou ocultar cada situação. Para preservar as famílias, a localização é aproximada (cerca de 100 m) e nenhum dado pessoal é exibido. <span id="semc"></span></p>
+  </div>
+  <div class="card" id="postes">
+    <h2>Postes e padrões de energia</h2>
+    <p class="sub">Imóveis vistoriados cuja entrada de energia elétrica (poste e padrão de entrada) precisa ser substituída ou recuperada.</p>
+    <div class="tabs" id="ptabs"><button data-f="perda" class="on">Perda total – substituir poste/padrão</button><button data-f="rec">Passível de recuperação</button><button data-f="todos">Todos</button></div>
+    <div id="ptab"><div class="state">Carregando…</div></div>
+    <div class="tools"><button class="btn" id="pcsv">Baixar planilha (CSV)</button><button class="btn" id="pprint">Imprimir relação</button></div>
+    <p class="note">Situação conforme avaliada pelo responsável técnico na vistoria. A relação atualiza automaticamente à medida que novos laudos são enviados.</p>
   </div>
   <div class="card">
     <h2>Resumo por bairro</h2>
@@ -146,15 +167,46 @@ function draw() {
   if (!fitted && vis.length) { map.fitBounds(L.latLngBounds(vis.map(p => [p.lat, p.lng])).pad(0.2), { maxZoom: 16 }); fitted = true; }
 }
 
+let POSTES = [], PF = "perda";
+const isPerda = x => /perda total/i.test(x.energia || ""), isRec = x => /recupera/i.test(x.energia || "");
+function plista() {
+  return POSTES.filter(x => PF === "todos" || (PF === "perda" ? isPerda(x) : isRec(x)))
+    .sort((a, b) => (a.bairro || "").localeCompare(b.bairro || "") || (a.endereco || "").localeCompare(b.endereco || ""));
+}
+function setF(f) { PF = f; document.querySelectorAll("#ptabs button").forEach(b => b.classList.toggle("on", b.dataset.f === f)); ptable(); }
+function coordDe(x) { const m = String(x.coord || "").match(/(-?\d+(?:[.,]\d+)?)\s*[,;\s]\s*(-?\d+(?:[.,]\d+)?)/); return m ? [Number(m[1].replace(",", ".")), Number(m[2].replace(",", "."))] : null; }
+function ptable() {
+  const rows = plista(), box = document.getElementById("ptab");
+  if (!rows.length) { box.innerHTML = `<div class="state">${POSTES.length ? "Nenhum imóvel nesta situação até o momento." : "Nenhum imóvel com entrada de energia a substituir ou recuperar até o momento."}</div>`; return; }
+  box.innerHTML = `<div style="overflow-x:auto"><table class="rel"><thead><tr><th class="n">#</th><th>Endereço</th><th>Bairro/localidade</th><th>Entrada de energia</th><th>Habitabilidade</th><th>Laudo</th><th></th></tr></thead><tbody>${
+    rows.map((x, i) => `<tr><td class="n">${i + 1}</td><td><b>${esc(x.endereco || "(endereço não informado)")}</b></td><td>${esc(x.bairro)}</td><td><span class="tag ${isPerda(x) ? "perda" : "rec"}">${isPerda(x) ? "Substituir poste/padrão" : "Recuperar"}</span></td><td>${esc(x.hab)}</td><td>${esc(x.data)}</td><td>${coordDe(x) ? `<button class="lnk" data-i="${i}">Ver no mapa</button>` : ""}</td></tr>`).join("")
+  }</tbody></table></div>`;
+  box.querySelectorAll("[data-i]").forEach(b => b.onclick = () => {
+    const x = rows[+b.dataset.i], c = coordDe(x);
+    document.getElementById("map").scrollIntoView({ behavior: "smooth", block: "center" });
+    map.setView(c, 18);
+    L.circleMarker(c, { radius: 13, color: "#6b4fa0", weight: 3, fill: false }).addTo(map).bindPopup(`<b>${esc(x.endereco)}</b><br>${esc(x.energia)}`).openPopup();
+  });
+}
+function pcsv() {
+  const rows = [["Endereço","Bairro/localidade","Entrada de energia","Habitabilidade","Data do laudo","Coordenadas"]].concat(plista().map(x => [x.endereco, x.bairro, x.energia, x.hab, x.data, x.coord]));
+  const txt = "\ufeff" + rows.map(r => r.map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(";")).join("\r\n");
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([txt], { type: "text/csv;charset=utf-8" }));
+  a.download = `Relacao_postes_Tupancireta_${new Date().toISOString().slice(0, 10)}.csv`; a.click();
+}
+document.getElementById("ptabs").addEventListener("click", e => { const b = e.target.closest("button"); if (b) setF(b.dataset.f); });
+document.getElementById("pcsv").onclick = pcsv;
+document.getElementById("pprint").onclick = () => { document.body.classList.add("pp"); window.print(); setTimeout(() => document.body.classList.remove("pp"), 500); };
+
 function stats(d) {
   const cnt = {}; PTS.forEach(p => { const c = cat(p.hab); cnt[c] = (cnt[c] || 0) + 1; });
   let h = `<div class="stat total"><b>${d.total}</b><span>Laudos recebidos</span></div>`;
-  const postes = PTS.filter(p => /perda total/i.test(p.energia || "")).length, recup = PTS.filter(p => /recupera/i.test(p.energia || "")).length;
-  CAT.forEach(([k, c]) => { if (!cnt[k] && k === "Sem avaliação") return;
+    CAT.forEach(([k, c]) => { if (!cnt[k] && k === "Sem avaliação") return;
     h += `<div class="stat${OFF.has(k) ? " off" : ""}" style="--c:${c}" data-k="${esc(k)}"><b>${cnt[k] || 0}</b><span>${esc(k)}</span></div>`; });
-  h += `<div class="stat total" style="--c:#6b4fa0"><b>${postes}</b><span>Poste/padrão de energia a substituir</span></div>`;
-  if (recup) h += `<div class="stat total" style="--c:#8a7bb3"><b>${recup}</b><span>Entrada de energia a recuperar</span></div>`;
+  h += `<div class="stat total go" style="--c:#6b4fa0" data-p="perda"><b>${POSTES.filter(isPerda).length}</b><span>Poste/padrão de energia a substituir</span></div>`;
+  h += `<div class="stat total go" style="--c:#c9862e" data-p="rec"><b>${POSTES.filter(isRec).length}</b><span>Entrada de energia a recuperar</span></div>`;
   const box = document.getElementById("stats"); box.innerHTML = h;
+  box.querySelectorAll("[data-p]").forEach(el => el.onclick = () => { setF(el.dataset.p); document.getElementById("postes").scrollIntoView({ behavior: "smooth" }); });
   box.querySelectorAll("[data-k]").forEach(el => el.onclick = () => { const k = el.dataset.k; OFF.has(k) ? OFF.delete(k) : OFF.add(k); el.classList.toggle("off"); draw(); });
 }
 
@@ -174,13 +226,13 @@ async function load() {
   try {
     const r = await fetch(URL_DADOS + "?acao=pontos&t=" + Date.now());
     const d = await r.json(); if (!d.ok) throw new Error("dados");
-    PTS = d.pontos || [];
+    PTS = d.pontos || []; POSTES = d.postes || [];
     document.getElementById("upd").textContent = "Atualizado em " + d.atualizado;
     document.getElementById("semc").textContent = d.semCoord === 1 ? "1 laudo sem localização registrada não aparece no mapa." : d.semCoord > 1 ? `${d.semCoord} laudos sem localização registrada não aparecem no mapa.` : "";
-    stats(d); draw(); table();
+    stats(d); draw(); table(); ptable();
   } catch (e) {
     document.getElementById("upd").textContent = "Sem conexão";
-    document.getElementById("tab").innerHTML = `<div class="state">Não foi possível carregar os dados. Verifique a internet e recarregue a página.</div>`;
+    document.getElementById("ptab").innerHTML = document.getElementById("tab").innerHTML = `<div class="state">Não foi possível carregar os dados. Verifique a internet e recarregue a página.</div>`;
   }
 }
 load(); setInterval(load, 120000);
