@@ -1,5 +1,5 @@
 /* Laudos UH – funcionamento sem internet */
-const VERSION = "laudos-uh-v26";
+const VERSION = "laudos-uh-v27";
 const CORE = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png",
   "./lib/jspdf.umd.min.js", "./lib/docx.iife.js", "./lib/exifr-lite.umd.js", "./lib/leaflet.min.js", "./lib/leaflet.min.css",
   "./lib/images/marker-icon.png", "./lib/images/marker-icon-2x.png", "./lib/images/marker-shadow.png"];
@@ -28,7 +28,7 @@ self.addEventListener("fetch", e => {
     return;
   }
   // fontes e mapas já vistos ficam guardados para uso sem sinal
-  if (/fonts\.(googleapis|gstatic)\.com|tile\.openstreetmap\.org/.test(url.host)) {
+  if (/fonts\.(googleapis|gstatic)\.com|tile\.openstreetmap\.org|server\.arcgisonline\.com/.test(url.host)) {
     e.respondWith(caches.open(RUNTIME).then(ca => ca.match(req).then(hit => {
       const net = fetch(req).then(n => { if (n.ok || n.type === "opaque") ca.put(req, n.clone()); return n; }).catch(() => hit);
       return hit || net;

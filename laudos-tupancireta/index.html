@@ -777,7 +777,7 @@ function bind(){
     S[k]=el.value;
     if(k==="dtLaudo") S._dtManual=true;
     if(k==="end") S._endAuto=false; if(k==="bairro") S._bairroAuto=false;
-    if(k==="coord"){ const c=parseCoord(el.value); if(c){ S.coordSrc="manual"; showMap(c[0],c[1]); } }
+    if(k==="coord"){ const c=parseCoord(el.value); if(c){ S.coordSrc="manual"; showMap(c[0],c[1]); prefetchMapa(); } }
     if(AUTO_KEYS.includes(k)){ const empty=!el.value.trim(); el.dataset.auto=empty?"1":"0"; S._auto[k]=empty; }
     if(k==="evento") setEventoCobrade();
     changed();
@@ -843,7 +843,7 @@ async function useGeo(){
 }
 function setGeoStatus(html,warn){ const el=$("#geoStatus"); el.hidden=false; el.innerHTML=html; el.classList.toggle("warn",!!warn); }
 function setCoord(lat,lon,src,acc){
-  S.coord=fixStr(lat,lon); S.coordSrc=src; S.coordAcc=acc?Math.round(acc):"";
+  S.coord=fixStr(lat,lon); prefetchMapa(); S.coordSrc=src; S.coordAcc=acc?Math.round(acc):"";
   $("#coord").value=S.coord;
   const srcTxt={gps:"GPS do celular",foto:"GPS da fotografia",mapa:"ponto ajustado no mapa"}[src]||"informada";
   let msg=`<b>Localização registrada</b> (${srcTxt}${S.coordAcc?`, precisão de cerca de ${S.coordAcc} m`:""}). Confira o ponto no mapa; se necessário, arraste o marcador ou toque sobre o imóvel para ajustar.`;
@@ -860,7 +860,9 @@ function showMap(lat,lon){
   const box=$("#map"); box.hidden=false;
   if(!MAP){
     MAP=L.map(box,{zoomControl:true,attributionControl:true}).setView([lat,lon],18);
-    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>'}).addTo(MAP);
+    const ruas=L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>'});
+    const sat=L.layerGroup([L.tileLayer(SAT_URL,{maxZoom:19,maxNativeZoom:18,crossOrigin:"anonymous",attribution:"Esri, Maxar, Earthstar Geographics"}),L.tileLayer(SAT_REF,{maxZoom:19,maxNativeZoom:18,crossOrigin:"anonymous"})]);
+    sat.addTo(MAP); L.control.layers({"Satélite":sat,"Mapa":ruas},null,{collapsed:false,position:"topright"}).addTo(MAP);
     MAP.attributionControl.setPrefix(false);
     MARK=L.marker([lat,lon],{draggable:true}).addTo(MAP);
     MARK.on("dragend",()=>{ const p=MARK.getLatLng(); setCoord(p.lat,p.lng,"mapa"); fillAddress(p.lat,p.lng,true); });
@@ -958,6 +960,82 @@ function renderPhotos(){
   });
 }
 
+
+/* ====================== Imagem de satélite da localização ====================== */
+const SAT_URL="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
+const SAT_REF="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}";
+const SAT_FONTE="Imagem de satélite: Esri, Maxar, Earthstar Geographics";
+let MAPA_MEM=null, MAPA_DOC=null, MAPA_JOB=null;
+const mapaKey=c=>{ const p=parseCoord(c); return p?`${p[0].toFixed(5)},${p[1].toFixed(5)}`:""; };
+function tileImg(url,ms){
+  return new Promise((res,rej)=>{
+    const ctl=new AbortController(); const t=setTimeout(()=>{ ctl.abort(); rej(new Error("timeout")); },ms);
+    fetch(url,{mode:"cors",signal:ctl.signal}).then(r=>{ if(!r.ok) throw new Error("http"); return r.blob(); }).then(b=>{
+      const u=URL.createObjectURL(b); const i=new Image(); i.onload=()=>{ clearTimeout(t); res({img:i,size:b.size,u}); }; i.onerror=()=>{ clearTimeout(t); rej(new Error("img")); }; i.src=u;
+    }).catch(e=>{ clearTimeout(t); rej(e); });
+  });
+}
+function decora(g,W,H,lat,z){
+  // escala gráfica
+  const mpp=156543.03392*Math.cos(lat*Math.PI/180)/2**z, m=[20,25,50,100,200].find(v=>v/mpp>=70)||50, px=m/mpp;
+  const sx=16, sy=H-20;
+  g.fillStyle="rgba(255,255,255,.85)"; g.fillRect(sx-8,sy-22,px+48,32);
+  g.fillStyle="#1d2b2a"; g.fillRect(sx,sy,px,4); g.fillRect(sx,sy-6,2,10); g.fillRect(sx+px-2,sy-6,2,10);
+  g.font="600 15px 'Source Sans 3',Arial,sans-serif"; g.fillText(`${m} m`,sx+px+6,sy+5);
+  // norte
+  g.fillStyle="rgba(255,255,255,.85)"; g.fillRect(W-40,10,30,40);
+  g.fillStyle="#1d2b2a"; g.beginPath(); g.moveTo(W-25,16); g.lineTo(W-32,34); g.lineTo(W-25,30); g.lineTo(W-18,34); g.closePath(); g.fill();
+  g.font="700 13px 'Source Sans 3',Arial,sans-serif"; g.textAlign="center"; g.fillText("N",W-25,47); g.textAlign="left";
+}
+async function compoeMapa(lat,lng,z,W,H){
+  const n=256*2**z, x=(lng+180)/360*n, sn=Math.sin(lat*Math.PI/180), y=(0.5-Math.log((1+sn)/(1-sn))/(4*Math.PI))*n;
+  const x0=x-W/2, y0=y-H/2;
+  const cv=document.createElement("canvas"); cv.width=W; cv.height=H; const g=cv.getContext("2d");
+  g.fillStyle="#d9dedd"; g.fillRect(0,0,W,H);
+  const jobs=[];
+  for(let tx=Math.floor(x0/256); tx<=Math.floor((x0+W)/256); tx++) for(let ty=Math.floor(y0/256); ty<=Math.floor((y0+H)/256); ty++){
+    const f=t=>t.replace("{z}",z).replace("{y}",ty).replace("{x}",tx);
+    jobs.push(Promise.all([tileImg(f(SAT_URL),9000), tileImg(f(SAT_REF),9000).catch(()=>null)]).then(([a,b])=>({tx,ty,a,b})));
+  }
+  const T=await Promise.all(jobs);
+  // nível sem cobertura de imagem: o servidor devolve um ladrilho cinza pequeno
+  const cx=Math.floor(x/256), cy=Math.floor(y/256), c=T.find(t=>t.tx===cx&&t.ty===cy);
+  if(!c || c.a.size<4000) { T.forEach(t=>{ URL.revokeObjectURL(t.a.u); t.b&&URL.revokeObjectURL(t.b.u); }); return null; }
+  T.forEach(t=>{ g.drawImage(t.a.img,Math.round(t.tx*256-x0),Math.round(t.ty*256-y0)); });
+  T.forEach(t=>{ if(t.b) g.drawImage(t.b.img,Math.round(t.tx*256-x0),Math.round(t.ty*256-y0)); URL.revokeObjectURL(t.a.u); t.b&&URL.revokeObjectURL(t.b.u); });
+  // marcador do imóvel
+  const mx=W/2, my=H/2;
+  g.lineWidth=5; g.strokeStyle="#fff"; g.beginPath(); g.arc(mx,my,15,0,7); g.stroke();
+  g.lineWidth=4; g.strokeStyle="#d7261e"; g.beginPath(); g.arc(mx,my,13,0,7); g.stroke();
+  g.fillStyle="#d7261e"; g.beginPath(); g.arc(mx,my,3.5,0,7); g.fill();
+  const base=cv.toDataURL("image/jpeg",0.9); decora(g,W,H,lat,z);
+  return {src:cv.toDataURL("image/jpeg",0.86),base,w:W,h:H,z,lat};
+}
+function recorte(m,H){ return new Promise(r=>{ const i=new Image(); i.onload=()=>{ const c=document.createElement("canvas"); c.width=m.w; c.height=H; const g=c.getContext("2d"); g.drawImage(i,0,(m.h-H)/2,m.w,H,0,0,m.w,H); decora(g,m.w,H,m.lat,m.z); r(c.toDataURL("image/jpeg",0.86)); }; i.onerror=()=>r(m.src); i.src=m.base||m.src; }); }
+async function obterMapa(coord){
+  const k=mapaKey(coord); if(!k) return null;
+  if(MAPA_MEM && MAPA_MEM.k===k) return MAPA_MEM;
+  try{ const c=await IDB.get("mapa:"+k); if(c&&c.src){ MAPA_MEM=c; return c; } }catch(e){}
+  if(MAPA_JOB && MAPA_JOB.k===k) return MAPA_JOB.p;
+  const [lat,lng]=parseCoord(coord);
+  const p=(async()=>{
+    let r=null;
+    for(const z of [18,17]){ try{ r=await compoeMapa(lat,lng,z,800,500); }catch(e){ r=null; } if(r) break; }
+    if(!r) return null;
+    r.k=k; MAPA_MEM=r; try{ await IDB.set("mapa:"+k,r); }catch(e){}
+    return r;
+  })().finally(()=>{ if(MAPA_JOB&&MAPA_JOB.k===k) MAPA_JOB=null; });
+  MAPA_JOB={k,p}; return p;
+}
+let mapaT=null;
+function prefetchMapa(){ clearTimeout(mapaT); mapaT=setTimeout(()=>{ if(navigator.onLine!==false && mapaKey(S.coord)) obterMapa(S.coord).catch(()=>{}); },1500); }
+async function prepMapa(){
+  MAPA_DOC=null; const k=mapaKey(S.coord); if(!k) return;
+  const espera=new Promise(r=>setTimeout(()=>r(null),12000));
+  try{ MAPA_DOC=await Promise.race([obterMapa(S.coord),espera]); }catch(e){ MAPA_DOC=null; }
+  if(MAPA_DOC && MAPA_DOC.k!==k) MAPA_DOC=null;
+}
+
 /* ====================== Documento (modelo comum) ====================== */
 function V(s){ s=(s??"").toString().trim(); return s||"—"; }
 function blocks(){
@@ -978,6 +1056,7 @@ function blocks(){
   KV("Nome do responsável/família",S.famNome); KV("CPF",S.cpf); KV("Endereço completo",S.end); KV("Bairro/localidade",S.bairro);
   KV("Coordenadas geográficas",coordTxt(S.coord));
   if(mapsUrl(S.coord)) B.push({t:"link",k:"Localização no mapa",v:"abrir no Google Maps",url:mapsUrl(S.coord)});
+  if(MAPA_DOC && MAPA_DOC.k===mapaKey(S.coord)) B.push({t:"mapa",m:MAPA_DOC,src:MAPA_DOC.src,w:MAPA_DOC.w,h:MAPA_DOC.h,cap:`Localização do imóvel (marcador vermelho). ${SAT_FONTE}.`});
   OPTS("Área urbana:",[["Sim",S.area==="urbana"],["Não",S.area==="rural"]]);
   OPTS("Área rural:",[["Sim",S.area==="rural"],["Não",S.area==="urbana"]]);
   OPTS("Tipo construtivo:",TIPOS.map(([v,l])=>[v==="outro"?`Outro: ${S.tipo==="outro"&&S.tipoOutro.trim()?S.tipoOutro.trim():"____________"}`:l, S.tipo===v]));
@@ -1028,6 +1107,7 @@ async function parceiros(){
 
 /* ====================== Word (.docx) ====================== */
 async function buildDocx(){
+  await prepMapa();
   const d=window.docx;
   const {Document,Packer,Paragraph,TextRun,ImageRun,Header,Footer,AlignmentType,TabStopType,BorderStyle,PageNumber,ExternalHyperlink,Table,TableRow,TableCell,WidthType,VerticalAlign}=d;
   const TEAL="004642", ORANGE="EE6A15", GREY="5D6F6D";
@@ -1078,6 +1158,10 @@ async function buildDocx(){
       kids.push(new Paragraph({keepNext:true,spacing:{before:260,after:120},border:{bottom:{style:BorderStyle.SINGLE,size:8,color:ORANGE,space:2}},children:[new TextRun({text:b.text,bold:true,color:TEAL,size:23})]}));
     } else if(b.t==="link"){
       kids.push(new Paragraph({spacing:{after:70},children:[new TextRun({text:b.k+": ",bold:true}),new ExternalHyperlink({link:b.url,children:[new TextRun({text:b.v,color:"0B5CAD",underline:{}})]})]}));
+    } else if(b.t==="mapa"){
+      const w=567, h=Math.round(w*b.h/b.w);
+      kids.push(new Paragraph({alignment:AlignmentType.CENTER,keepNext:true,spacing:{before:80,after:40},children:[new ImageRun({type:"jpg",data:dataUrlToU8(b.src),transformation:{width:w,height:h}})]}));
+      kids.push(new Paragraph({alignment:AlignmentType.CENTER,spacing:{after:140},children:[new TextRun({text:b.cap,size:16,color:GREY})]}));
     } else if(b.t==="kv"){
       kids.push(new Paragraph({spacing:{after:70},children:[new TextRun({text:b.k+": ",bold:true}),new TextRun({text:b.v})]}));
     } else if(b.t==="label"){
@@ -1112,6 +1196,7 @@ async function buildDocx(){
 
 /* ====================== PDF ====================== */
 async function buildPdf(){
+  await prepMapa();
   const {jsPDF}=window.jspdf;
   const doc=new jsPDF({unit:"mm",format:"a4",compress:true});
   const PW=210, PH=297, ML=20, MR=20, MT=42, MB=22, W=PW-ML-MR;
@@ -1175,6 +1260,13 @@ async function buildPdf(){
       ensure(6); font("bold",10.5); color(INK); const lbl=b.k+": "; doc.text(lbl,ML,y+3.7); const lw=doc.getTextWidth(lbl);
       font("normal",10.5); doc.setTextColor(11,92,173); doc.textWithLink(b.v,ML+lw,y+3.7,{url:b.url}); const vw=doc.getTextWidth(b.v);
       doc.setDrawColor(11,92,173); doc.setLineWidth(0.2); doc.line(ML+lw,y+4.4,ML+lw+vw,y+4.4); y+=LH(10.5)+0.9;
+    } else if(b.t==="mapa"){
+      // ocupa o espaço que resta na página (mín. 105 mm de largura) para não deixar vazio
+      const r=b.h/b.w, livre=PH-MB-y-10, w=150; let h=w*r, src=b.src;
+      if(h>livre){ if(livre>=50){ h=livre; src=b.m.base?await recorte(b.m,Math.round(b.w*h/w)):b.src; } else ensure(h+10); }
+      y+=1.5;
+      doc.addImage(src,"JPEG",ML+(W-w)/2,y,w,h,undefined,"FAST"); doc.setDrawColor(200,210,208); doc.setLineWidth(0.2); doc.rect(ML+(W-w)/2,y,w,h); y+=h+1.6;
+      font("normal",8); color(GREY); doc.text(b.cap,PW/2,y+2.8,{align:"center"}); y+=7;
     } else if(b.t==="kv"){
       runs([{text:b.k+": ",bold:true},{text:b.v}],10.5); y+=0.9;
     } else if(b.t==="label"){
