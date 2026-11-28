@@ -243,7 +243,8 @@ footer button{background:none;border:0;padding:0;color:var(--muted);text-decorat
         <div class="f s4"><label class="l" for="rtProf">Profissão <span class="req">*</span></label><select id="rtProf" data-k="rtProf"><option value="">Selecione</option><option>Engenheiro(a) Civil</option><option>Arquiteto(a) e Urbanista</option><option>Engenheiro(a) Civil e de Segurança do Trabalho</option><option>Engenheiro(a) Eletricista</option><option>Engenheiro(a) Mecânico(a)</option><option value="__outra">Outra profissão</option></select></div>
         <div class="f s12" id="rtProfOutroWrap" hidden><label class="l" for="rtProfOutro">Informe a profissão</label><input type="text" id="rtProfOutro" data-k="rtProfOutro"></div>
         <div class="f s6"><label class="l" for="rtReg">Registro profissional (CREA ou CAU) <span class="req">*</span></label><input type="text" id="rtReg" data-k="rtReg" placeholder="CREA-RS 000000 ou CAU A000000-0"></div>
-        <div class="f s6"><label class="l" for="rtCargo">Cargo/Função</label><input type="text" id="rtCargo" data-k="rtCargo"></div>
+        <div class="f s6"><label class="l" for="rtTel">Telefone para contato (WhatsApp) <span class="req">*</span></label><input type="tel" id="rtTel" data-k="rtTel" inputmode="tel" autocomplete="tel" placeholder="(51) 99999-9999"></div>
+        <div class="f s12"><label class="l" for="rtCargo">Cargo/Função</label><input type="text" id="rtCargo" data-k="rtCargo"></div>
       </div>
       <p class="note">O laudo é emitido em nome do SENGE-RS – Programa SENGE Solidário, e a assinatura é feita pelo gov.br, em nome do profissional indicado acima. Confira se o nome informado coincide com o do titular da conta gov.br.</p>
     </div>
@@ -441,7 +442,7 @@ const MED = [["intParcial","Interdição parcial"],["intTotal","Interdição tot
 const STRUCT = ["trincas","recalque","fundacao","colapsoParcial","colapsoTotal","destruicao"];
 
 const AUTO_KEYS = ["descEvento","descDanos","avalTec","impDesc","medDesc","metod","conclusao","localData","valor"];
-const KEEP_KEYS = ["mun","uf","evento","eventoOutro","cobrade","dtOcorr","hrEvento","descEvento","rtNome","rtProf","rtProfOutro","rtReg","rtCargo","rtOrgao"];
+const KEEP_KEYS = ["mun","uf","evento","eventoOutro","cobrade","dtOcorr","hrEvento","descEvento","rtNome","rtProf","rtProfOutro","rtReg","rtTel","rtCargo","rtOrgao"];
 const LS_DRAFT = "senge_laudo_uh_rascunho_v1", LS_HIST = "senge_laudo_uh_historico_v1";
 
 /* ====================== Utilitários ====================== */
@@ -471,7 +472,7 @@ function cpfMask(v){ const d=v.replace(/\D/g,"").slice(0,11); return d.replace(/
 /* ====================== Estado ====================== */
 const DEFAULTS = {
   mun:"Tupanciretã", uf:"RS", evento:"tornado", eventoOutro:"", cobrade:"1.3.2.1.1", dtOcorr:"2026-11-20", hrEvento:"madrugada", dtLaudo:"",
-  descEvento:"", rtNome:"", rtProf:"", rtProfOutro:"", rtReg:"", rtCargo:"Profissional voluntário(a)", rtOrgao:"SENGE-RS – Programa SENGE Solidário",
+  descEvento:"", rtNome:"", rtProf:"", rtProfOutro:"", rtReg:"", rtTel:"", rtCargo:"Profissional voluntário(a)", rtOrgao:"SENGE-RS – Programa SENGE Solidário",
   famNome:"", cpf:"", end:"", bairro:"", coord:"", area:"", tipo:"", tipoOutro:"", moradores:"",
   danos:[], danosOutro:"", cobTipo:"", cobPct:"", madeir:"", obsDanos:"", descDanos:"",
   hab:"", avalTec:"", imp:[], impOutro:"", impDesc:"", med:[], medOutro:"", medDesc:"",
@@ -678,6 +679,8 @@ function normalize(){
   S.rtOrgao=ORGAO;
   if(S.rtProf && S.rtProf!=="__outra" && !PROFS.includes(S.rtProf)){ S.rtProfOutro=S.rtProf; S.rtProf="__outra"; }
 }
+function fmtTel(v){ const d=String(v||"").replace(/\D/g,"").slice(0,11); if(d.length<3) return d; if(d.length<7) return `(${d.slice(0,2)}) ${d.slice(2)}`; return d.length===11?`(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`:`(${d.slice(0,2)}) ${d.slice(2,6)}-${d.slice(6)}`; }
+document.addEventListener("blur",e=>{ if(e.target&&e.target.id==="rtTel"){ const v=fmtTel(e.target.value); if(v!==e.target.value){ e.target.value=v; e.target.dispatchEvent(new Event("input",{bubbles:true})); } } },true);
 function toUI(){
   normalize();
   $$("[data-k]").forEach(el=>{ const k=el.dataset.k; el.value=S[k]??""; if(AUTO_KEYS.includes(k)) el.dataset.auto=(S._auto[k]===false)?"0":"1"; });
@@ -708,7 +711,7 @@ function refreshAuto(){
 
 const REQ={
   A:[["mun","Município"],["uf","UF"],["dtLaudo","Data e hora da elaboração"]],
-  B:[["rtNome","Nome do responsável técnico"],["rtProf","Profissão"],["rtReg","Registro de classe"]],
+  B:[["rtNome","Nome do responsável técnico"],["rtProf","Profissão"],["rtReg","Registro de classe"],["rtTel","Telefone para contato"]],
   C:[["famNome","Nome do responsável/família"],["end","Endereço"],["bairro","Bairro/localidade"],["area","Localização (urbana ou rural)"],["tipo","Tipo construtivo"]],
   J:[["dtOcorr","Data da ocorrência"]],
   D:[["danos","Danos constatados"]],
@@ -941,7 +944,7 @@ function blocks(){
   KV("Tipo de Evento Adverso",evFull()); KV("COBRADE",S.cobrade); KV("Data da ocorrência",dBR(S.dtOcorr)); KV("Horário do evento",S.hrEvento);
 
   H("2. IDENTIFICAÇÃO DO RESPONSÁVEL TÉCNICO");
-  KV("Nome completo",S.rtNome); KV("Profissão",prof()); KV("Registro de classe nº",S.rtReg); KV("Cargo/Função",S.rtCargo); KV("Órgão/Entidade",ORGAO);
+  KV("Nome completo",S.rtNome); KV("Profissão",prof()); KV("Registro de classe nº",S.rtReg); KV("Telefone para contato",S.rtTel); KV("Cargo/Função",S.rtCargo); KV("Órgão/Entidade",ORGAO);
 
   H("3. IDENTIFICAÇÃO DA UNIDADE HABITACIONAL");
   KV("Nome do responsável/família",S.famNome); KV("CPF",S.cpf); KV("Endereço completo",S.end); KV("Bairro/localidade",S.bairro);
@@ -1361,7 +1364,7 @@ async function exportCsv(){
   const rows=[];
   for(const it of INDEX){ const r=await IDB.get("laudo:"+it.id); if(!r) continue; const s=r.S;
     rows.push({em:it.updated,familia:s.famNome,cpf:s.cpf,endereco:s.end,bairro:s.bairro,coord:s.coord,mapa:mapsUrl(s.coord),area:s.area,tipo:(TIPOS.find(t=>t[0]===s.tipo)||["",""])[1],moradores:s.moradores,
-      danos:(s.danos||[]).map(k=>(DANOS.find(d=>d[0]===k)||["",k])[1]).join("; "),hab:(HAB.find(x=>x[0]===s.hab)||["",""])[1],valor:s.valor,rt:s.rtNome,registro:s.rtReg,fotos:(r.PHOTOS||[]).length,situacao:it.status==="emitido"?"PDF gerado":"Em preenchimento"}); }
+      danos:(s.danos||[]).map(k=>(DANOS.find(d=>d[0]===k)||["",k])[1]).join("; "),hab:(HAB.find(x=>x[0]===s.hab)||["",""])[1],valor:s.valor,rt:s.rtNome,registro:s.rtReg,tel:s.rtTel,fotos:(r.PHOTOS||[]).length,situacao:it.status==="emitido"?"PDF gerado":"Em preenchimento"}); }
   for(const h of load(LS_HIST,[])) if(!rows.some(r=>(r.familia+"|"+r.endereco).toLowerCase()===h.key)) rows.push({...h,situacao:"PDF gerado"});
   if(!rows.length){ toast("Ainda não há laudos."); return; }
   const cols=[["em","Atualizado em"],["familia","Responsável/família"],["cpf","CPF"],["endereco","Endereço"],["bairro","Bairro/localidade"],["coord","Coordenadas"],["mapa","Mapa"],["area","Área"],["tipo","Tipo construtivo"],["moradores","Moradores"],["danos","Danos"],["hab","Habitabilidade"],["rt","Responsável técnico"],["registro","Registro"],["fotos","Nº de fotos"],["situacao","Situação"]];
@@ -1393,7 +1396,7 @@ let SENDING=false;
 function blobToB64(blob){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(String(r.result).split(",")[1]); r.onerror=rej; r.readAsDataURL(blob); }); }
 function metaFor(s,ph){
   return {familia:s.famNome,cpf:s.cpf,endereco:s.end,bairro:s.bairro,coord:s.coord,mapa:mapsUrl(s.coord),tipo:(TIPOS.find(t=>t[0]===s.tipo)||["",""])[1],moradores:s.moradores,
-    danos:(s.danos||[]).map(k=>(DANOS.find(d=>d[0]===k)||["",k])[1]).join("; "),hab:(HAB.find(x=>x[0]===s.hab)||["",""])[1],valor:s.valor,rt:s.rtNome,registro:s.rtReg,fotos:(ph||[]).length};
+    danos:(s.danos||[]).map(k=>(DANOS.find(d=>d[0]===k)||["",k])[1]).join("; "),hab:(HAB.find(x=>x[0]===s.hab)||["",""])[1],valor:s.valor,rt:s.rtNome,registro:s.rtReg,tel:s.rtTel,fotos:(ph||[]).length};
 }
 async function enqueueSend(id,kind,blob,base){
   if(!ENVIO_ON) return;
